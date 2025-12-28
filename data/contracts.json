@@ -1,0 +1,16 @@
+[
+  {
+    "name": "USDC",
+    "address": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+    "network": "mainnet",
+    "verified": true,
+    "deployedAt": 1652380800
+  },
+  {
+    "name": "TestToken",
+    "address": "0x123abc456def",
+    "network": "sepolia",
+    "verified": false,
+    "deployedAt": 1699920000
+  }
+]

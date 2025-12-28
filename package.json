@@ -1,0 +1,19 @@
+{
+  "name": "clinch-cli",
+  "version": "1.0.0",
+  "bin": {
+  "clinch": "./index.js"
+   },
+  "main": "index.js",
+  "scripts": {
+    "test": "node utils/testUtilities.js",
+    "start": "node index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "commander": "^14.0.2"
+  }
+}
