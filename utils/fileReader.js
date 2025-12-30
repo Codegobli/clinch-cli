@@ -16,7 +16,6 @@ async function readContracts() {
 // Test it
 readContracts().then((contracts) => {
   console.log(" Contracts loaded:");
-  console.table(contracts);
 });
 
 module.exports = {

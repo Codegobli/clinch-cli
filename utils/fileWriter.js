@@ -1,3 +1,4 @@
+const inquirer = require("inquirer");
 const fs = require("fs").promises;
 const path = require("path");
 
@@ -34,12 +35,62 @@ async function addContract(newContract) {
 
     const existingContracts = await readContracts();
 
-    const contract = existingContracts.find((c) => c.name === newContract.name);
+    // 1. Check for the Name Conflict
+    const nameConflict = existingContracts.find(
+      (c) =>
+        c.name.toLowerCase() === newContract.name.toLowerCase() &&
+        c.network === newContract.network
+    );
 
-    if (contract) {
-      console.log("Contract Already Exists:", contract);
+    if (nameConflict) {
+      console.log(
+        `⚠️  Warning: "${newContract.name}" already exists on ${newContract.network}.`
+      );
+
+      // 2. Trigger the Prompt
+      const { action } = await inquirer.prompt([
+        {
+          type: "list",
+          name: "action",
+          message: "How would you like to proceed?",
+          choices: [
+            { name: "Rename this new entry", value: "rename" },
+            { name: "Cancel", value: "cancel" },
+          ],
+        },
+      ]);
+
+      if (action === "rename") {
+        const { newName } = await inquirer.prompt([
+          {
+            type: "input",
+            name: "newName",
+            message: "Enter a unique name (e.g., USDC-Credra):",
+            validate: (input) =>
+              input.length > 0 ? true : "Name cannot be empty.",
+          },
+        ]);
+        newContract.name = newName; // Update the object with the new name
+      } else {
+        console.log("❌ Add operation cancelled.");
+        return;
+      }
+    }
+
+    // 3. Final safety check: Is the ADDRESS also a duplicate?
+    const addressDuplicate = existingContracts.find(
+      (c) =>
+        c.address.toLowerCase() === newContract.address.toLowerCase() &&
+        c.network === newContract.network
+    );
+
+    if (addressDuplicate) {
+      console.log(
+        `❌ Error: This address is already registered as "${addressDuplicate.name}".`
+      );
       return;
     }
+
     existingContracts.push(newContract);
 
     await saveContracts(existingContracts);
