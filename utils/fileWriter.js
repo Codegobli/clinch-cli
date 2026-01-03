@@ -4,6 +4,7 @@ const path = require("path");
 
 // Path to contracts file
 const CONTRACTS_FILE = path.join(__dirname, "../data/contracts.json");
+const ABI_DIRECTORY = path.join(__dirname, "../data/abis");
 
 /**
  * Save contracts array to file
@@ -152,4 +153,43 @@ async function deleteContract(contractName) {
   }
 }
 
-module.exports = { saveContracts, addContract, updateContract, deleteContract };
+/**
+ * Copies a user's ABI file into the local Clinch vault.
+ * @param {string} userPath - The path provided by the user (e.g., ./out/Contract.json)
+ * @param {string} name - Contract name for the filename
+ * @param {string} address - Contract address for unique identification
+ * @returns {string|null} - The relative path to the saved ABI or null if it fails
+ */
+
+async function captureAbi(userPath, name, address) {
+  try {
+    const abiPath = path.resolve(process.cwd(), userPath);
+
+    // 2. Define the destination vault directory
+    const vaultDir = path.join(__dirname, "../data/abis");
+
+    // 3. Create a unique filename to prevent collisions
+    const fileName = `${name}-${address.toLowerCase()}.json`;
+    const destinationPath = path.join(vaultDir, fileName);
+
+    // 4. Ensure the vault directory exists (creates it if missing)
+    await fs.mkdir(vaultDir, { recursive: true });
+
+    // 5. Physically copy the file
+    await fs.copyFile(abiPath, destinationPath);
+
+    // 6. Return the relative path to be stored in contracts.json
+    return `abis/${fileName}`;
+  } catch (error) {
+    console.log(`\x1b[31mError capturing ABI:\x1b[0m ${error.message}`);
+    return null;
+  }
+}
+
+module.exports = {
+  saveContracts,
+  addContract,
+  updateContract,
+  deleteContract,
+  captureAbi,
+};
