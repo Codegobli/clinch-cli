@@ -27,79 +27,76 @@ async function saveContracts(contracts) {
 
 /**
  * Add a new contract
- * @param {Object} newContract - Contract object to add
+ * @param {Object} newContract - { name, address, network, abi }
  */
 async function addContract(newContract) {
   try {
-    // Import readContracts from fileReader
     const { readContracts } = require("./fileReader");
-
     const existingContracts = await readContracts();
 
-    // 1. Check for the Name Conflict
-    const nameConflict = existingContracts.find(
-      (c) =>
-        c.name.toLowerCase() === newContract.name.toLowerCase() &&
-        c.network === newContract.network
+    // --- 0. PRE-PROCESS DATA ---
+    // Clean inputs to ensure "ETH" and "eth" or "mainnet" match correctly
+    const cleanAddress = newContract.address.toLowerCase().trim();
+    const cleanName = newContract.name.trim();
+    const cleanNetwork = newContract.network.toLowerCase().trim();
+
+    // --- 1. GLOBAL NAME GUARD ---
+    // Rule: One name, one address, period.
+    const nameExistsAnywhere = existingContracts.find(
+      (c) => c.name.toLowerCase() === cleanName.toLowerCase()
     );
 
-    if (nameConflict) {
+    if (nameExistsAnywhere) {
+      console.log(`\n❌ Error: The name "${cleanName}" is already taken.`);
       console.log(
-        `⚠️  Warning: "${newContract.name}" already exists on ${newContract.network}.`
+        `ℹ️  It currently points to ${nameExistsAnywhere.address} on ${nameExistsAnywhere.network}.`
       );
 
-      // 2. Trigger the Prompt
-      const { action } = await inquirer.prompt([
-        {
-          type: "list",
-          name: "action",
-          message: "How would you like to proceed?",
-          choices: [
-            { name: "Rename this new entry", value: "rename" },
-            { name: "Cancel", value: "cancel" },
-          ],
-        },
-      ]);
+      // THE HELPFUL PART: Suggest a new name
+      const suggestedName = `${cleanName}_${cleanNetwork}`.toUpperCase();
 
-      if (action === "rename") {
-        const { newName } = await inquirer.prompt([
-          {
-            type: "input",
-            name: "newName",
-            message: "Enter a unique name (e.g., USDC-Credra):",
-            validate: (input) =>
-              input.length > 0 ? true : "Name cannot be empty.",
-          },
-        ]);
-        newContract.name = newName; // Update the object with the new name
-      } else {
-        console.log("❌ Add operation cancelled.");
-        return;
-      }
-    }
-
-    // 3. Final safety check: Is the ADDRESS also a duplicate?
-    const addressDuplicate = existingContracts.find(
-      (c) =>
-        c.address.toLowerCase() === newContract.address.toLowerCase() &&
-        c.network === newContract.network
-    );
-
-    if (addressDuplicate) {
       console.log(
-        `❌ Error: This address is already registered as "${addressDuplicate.name}".`
+        `\n💡 To keep things clear, try using a network-specific name:`
+      );
+      console.log(
+        `   clinch add ${suggestedName} ${cleanAddress} ${cleanNetwork}`
       );
       return;
     }
 
-    existingContracts.push(newContract);
+    // --- 2. ADDRESS GUARD (Network Specific) ---
+    // Rule: You can't add the same address twice on the same chain.
+    const addressConflict = existingContracts.find(
+      (c) =>
+        c.address.toLowerCase() === cleanAddress &&
+        c.network.toLowerCase() === cleanNetwork
+    );
 
+    if (addressConflict) {
+      console.log(
+        `\n❌ Error: This address is already registered on ${cleanNetwork}.`
+      );
+      console.log(
+        `👉 Use: clinch update "${addressConflict.name}" to modify it.`
+      );
+      return;
+    }
+
+    // --- 3. THE "HAPPY PATH" ---
+    const finalContract = {
+      ...newContract,
+      name: cleanName,
+      address: cleanAddress,
+      network: cleanNetwork,
+      deployedAt: Math.floor(Date.now() / 1000), // Helpful for sorting!
+    };
+
+    existingContracts.push(finalContract);
     await saveContracts(existingContracts);
 
-    console.log("Contract added successfully!");
+    console.log(`\n✅ Successfully added "${cleanName}" to the registry.`);
   } catch (error) {
-    console.log("Error adding contract:", error.message);
-    throw error;
+    console.error("Error adding contract:", error.message);
   }
 }
 
