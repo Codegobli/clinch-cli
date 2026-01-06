@@ -26,46 +26,41 @@ async function saveContracts(contracts) {
 }
 
 /**
- * Add a new contract
+ * Add a new contract to the registry
  * @param {Object} newContract - { name, address, network, abi }
  */
 async function addContract(newContract) {
   try {
-    const { readContracts } = require("./fileReader");
+    const { readContracts, saveContracts } = require("./fileReader");
     const existingContracts = await readContracts();
 
     // --- 0. PRE-PROCESS DATA ---
-    // Clean inputs to ensure "ETH" and "eth" or "mainnet" match correctly
     const cleanAddress = newContract.address.toLowerCase().trim();
     const cleanName = newContract.name.trim();
     const cleanNetwork = newContract.network.toLowerCase().trim();
 
     // --- 1. GLOBAL NAME GUARD ---
-    // Rule: One name, one address, period.
+    // Names must be unique across the entire registry to avoid command ambiguity
     const nameExistsAnywhere = existingContracts.find(
       (c) => c.name.toLowerCase() === cleanName.toLowerCase()
     );
 
     if (nameExistsAnywhere) {
-      console.log(`\n❌ Error: The name "${cleanName}" is already taken.`);
+      console.log(`\n[Error] The name "${cleanName}" is already taken.`);
       console.log(
-        `ℹ️  It currently points to ${nameExistsAnywhere.address} on ${nameExistsAnywhere.network}.`
+        `Info: It currently points to ${nameExistsAnywhere.address} on ${nameExistsAnywhere.network}.`
       );
 
-      // THE HELPFUL PART: Suggest a new name
       const suggestedName = `${cleanName}_${cleanNetwork}`.toUpperCase();
-
+      console.log(`\nSuggestion: Try using a network-specific name:`);
       console.log(
-        `\n💡 To keep things clear, try using a network-specific name:`
-      );
-      console.log(
-        `   clinch add ${suggestedName} ${cleanAddress} ${cleanNetwork}`
+        `  clinch add ${suggestedName} ${cleanAddress} ${cleanNetwork}`
       );
       return;
     }
 
     // --- 2. ADDRESS GUARD (Network Specific) ---
-    // Rule: You can't add the same address twice on the same chain.
+    // Check if this address already exists on this specific network
     const addressConflict = existingContracts.find(
       (c) =>
         c.address.toLowerCase() === cleanAddress &&
@@ -73,30 +68,33 @@ async function addContract(newContract) {
     );
 
     if (addressConflict) {
+      console.log(`\n[Alias Detected]`);
       console.log(
-        `\n❌ Error: This address is already registered on ${cleanNetwork}.`
+        `  - Address ${cleanAddress} is already registered as "${addressConflict.name}" on ${cleanNetwork}.`
       );
       console.log(
-        `👉 Use: clinch update "${addressConflict.name}" to modify it.`
+        `  - Registering "${cleanName}" as a secondary alias for this contract.`
       );
-      return;
+      console.log(
+        `\nNote: You can now use either '${addressConflict.name}' or '${cleanName}' for calls.`
+      );
     }
 
-    // --- 3. THE "HAPPY PATH" ---
+    // --- 3. FINALIZATION ---
     const finalContract = {
       ...newContract,
       name: cleanName,
       address: cleanAddress,
       network: cleanNetwork,
-      deployedAt: Math.floor(Date.now() / 1000), // Helpful for sorting!
+      deployedAt: Math.floor(Date.now() / 1000),
     };
 
     existingContracts.push(finalContract);
     await saveContracts(existingContracts);
 
-    console.log(`\n✅ Successfully added "${cleanName}" to the registry.`);
+    console.log(`\n[Success] Added "${cleanName}" to the registry.`);
   } catch (error) {
-    console.error("Error adding contract:", error.message);
+    console.error("\n[Fatal Error] Could not add contract:", error.message);
   }
 }
 
@@ -111,7 +109,11 @@ async function updateContract(contractName, updates) {
 
     const existingContracts = await readContracts();
 
-    const index = existingContracts.findIndex((c) => c.name === contractName);
+    const cleanName = contractName.trim().toLowerCase();
+
+    const index = existingContracts.findIndex(
+      (c) => c.name.toLowerCase() === cleanName
+    );
     if (index === -1) {
       console.log(`Contract "${contractName}" not found`);
       return;
@@ -119,7 +121,9 @@ async function updateContract(contractName, updates) {
 
     existingContracts[index] = { ...existingContracts[index], ...updates };
     await saveContracts(existingContracts);
-    console.log(`Contract "${contractName}" updated successfully`);
+    console.log(
+      `Success: Contract "${existingContracts[index].name}" updated.`
+    );
   } catch (error) {
     console.log("Error updating contract:", error.message);
     throw error;
@@ -166,7 +170,7 @@ async function captureAbi(userPath, name, address) {
     const vaultDir = path.join(__dirname, "../data/abis");
 
     // 3. Create a unique filename to prevent collisions
-    const fileName = `${name}-${address.toLowerCase()}.json`;
+    const fileName = `${name}-${address.slice(0, 6).toLowerCase()}.json`;
     const destinationPath = path.join(vaultDir, fileName);
 
     // 4. Ensure the vault directory exists (creates it if missing)
