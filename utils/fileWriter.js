@@ -4,6 +4,7 @@ const path = require("path");
 
 // Path to contracts file
 const CONTRACTS_FILE = path.join(__dirname, "../data/contracts.json");
+const TEMP_FILE = `${CONTRACTS_FILE}.tmp`;
 const ABI_DIRECTORY = path.join(__dirname, "../data/abis");
 
 /**
@@ -17,10 +18,14 @@ async function saveContracts(contracts) {
     await fs.mkdir(dir, { recursive: true });
 
     const jsonString = JSON.stringify(contracts, null, 2);
-    await fs.writeFile(CONTRACTS_FILE, jsonString, "utf8");
+    await fs.writeFile(TEMP_FILE, jsonString, "utf8");
+    await fs.rename(TEMP_FILE, CONTRACTS_FILE);
     console.log(`Contracts saved to: ${CONTRACTS_FILE}`);
   } catch (error) {
     console.log("Error saving contracts:", error.message);
+    try {
+      await fs.unlink(TEMP_FILE);
+    } catch (e) {}
     throw error;
   }
 }
@@ -31,7 +36,7 @@ async function saveContracts(contracts) {
  */
 async function addContract(newContract) {
   try {
-    const { readContracts, saveContracts } = require("./fileReader");
+    const { readContracts } = require("./fileReader");
     const existingContracts = await readContracts();
 
     // --- 0. PRE-PROCESS DATA ---
@@ -134,20 +139,51 @@ async function updateContract(contractName, updates) {
  * Delete a contract
  * @param {string} contractName - Name of contract to delete
  */
+/**
+ * Delete a contract and its associated ABI file
+ * @param {string} contractName - Name of contract to delete
+ */
 async function deleteContract(contractName) {
   try {
     const { readContracts } = require("./fileReader");
+
     const existingContracts = await readContracts();
-    const index = existingContracts.findIndex((c) => c.name === contractName);
+    const index = existingContracts.findIndex(
+      (c) => c.name.toLowerCase() === contractName.toLowerCase()
+    );
+
     if (index === -1) {
       console.log(`Contract "${contractName}" not found`);
       return;
     }
 
+    // 1. Identify the ABI file before removing the record
+    const contractToDelete = existingContracts[index];
+    const abiRelativePath = contractToDelete.abi;
+
+    // 2. Remove the record from the array
     existingContracts.splice(index, 1);
 
+    // 3. Save the updated registry
     await saveContracts(existingContracts);
-    console.log(`🗑️ Contract "${contractName}" deleted successfully`);
+
+    // 4. Physical Cleanup: Delete the ABI file if it exists
+    if (abiRelativePath) {
+      // Resolve path relative to your data folder
+      const fullPath = path.resolve(__dirname, "../data", abiRelativePath);
+
+      try {
+        await fs.unlink(fullPath);
+        console.log(`ABI file "${abiRelativePath}" cleaned up.`);
+      } catch (fileErr) {
+        // If the file was already missing, we don't want to crash the whole process
+        console.log(
+          `Note: Could not delete ABI file (it may have been moved or already deleted).`
+        );
+      }
+    }
+
+    console.log(`Contract "${contractName}" deleted successfully`);
   } catch (error) {
     console.log("Error deleting contract:", error.message);
     throw error;
