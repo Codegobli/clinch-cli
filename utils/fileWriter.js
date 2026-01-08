@@ -223,10 +223,82 @@ async function captureAbi(userPath, name, address) {
   }
 }
 
+/**
+ * Search contracts by name or address
+ * @param {string} query - Search term
+ * @param {Object} options - Filter options
+ */
+
+async function findContracts(query, options = {}) {
+  try {
+    const { readContracts } = require("./fileReader");
+    const contracts = await readContracts();
+
+    if (contracts.length === 0) {
+      console.log("No contracts found. Add some with: clinch add");
+      return;
+    }
+
+    let results = contracts;
+
+    // Filter by search query (name or address)
+    if (query) {
+      const lowerQuery = query.toLowerCase();
+
+      results = results.filter((contract) => {
+        const nameMatch = contract.name.toLowerCase().includes(lowerQuery);
+        const addressMatch = contract.address
+          .toLowerCase()
+          .includes(lowerQuery);
+
+        return nameMatch || addressMatch;
+      });
+    }
+
+    // Filter by network
+    if (options.network) {
+      results = results.filter((c) => c.network === options.network);
+    }
+
+    // Filter by verified status
+    if (options.verified !== undefined) {
+      results = results.filter((c) => c.verified === options.verified);
+    }
+
+    // Display results
+    if (results.length === 0) {
+      console.log("❌ No contracts found matching your search.");
+      console.log("\nTry:");
+      console.log("  - Different search term");
+      console.log("  - Remove filters");
+      console.log("  - clinch list (to see all contracts)");
+      return;
+    }
+
+    console.log(`\n✅ Found ${results.length} contract(s):\n`);
+
+    // Format results
+    results.forEach((contract, index) => {
+      const verified = contract.verified ? "[Verified]" : "[Not Verified]";
+      const shortAddr = contract.address.slice(0, 10) + "...";
+
+      console.log(`${index + 1}. ${verified} ${contract.name}`);
+      console.log(`   Address: ${shortAddr}`);
+      console.log(`   Network: ${contract.network}`);
+      console.log("");
+    });
+
+    console.log(`Total: ${results.length} contract(s)\n`);
+  } catch (error) {
+    console.error("Error searching contracts:", error.message);
+  }
+}
+
 module.exports = {
   saveContracts,
   addContract,
   updateContract,
   deleteContract,
   captureAbi,
+  findContracts,
 };
