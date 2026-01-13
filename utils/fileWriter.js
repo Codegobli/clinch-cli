@@ -1,11 +1,9 @@
-const inquirer = require("inquirer");
 const fs = require("fs").promises;
 const path = require("path");
 
 // Path to contracts file
 const CONTRACTS_FILE = path.join(__dirname, "../data/contracts.json");
 const TEMP_FILE = `${CONTRACTS_FILE}.tmp`;
-const ABI_DIRECTORY = path.join(__dirname, "../data/abis");
 
 /**
  * Save contracts array to file
