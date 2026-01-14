@@ -1,6 +1,6 @@
 const path = require("path");
 const { parseBroadCastInfo } = require("./foundryParser");
-const { saveContracts } = require("./fileWriter");
+const { addContract } = require("./fileWriter");
 
 async function syncFromFoundry(broadcastPath) {
   console.log("🔍Syncing from Foundry broadcast...");
@@ -15,7 +15,7 @@ async function syncFromFoundry(broadcastPath) {
   let syncCount = 0;
   for (const contract of newContracts) {
     try {
-      await saveContracts(contract);
+      await addContract(contract);
       console.log(` Synced: ${contract.name} (${contract.network})`);
       syncCount++;
     } catch (err) {

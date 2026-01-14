@@ -35,7 +35,11 @@ async function saveContracts(contracts) {
 async function addContract(newContract) {
   try {
     const { readContracts } = require("./fileReader");
-    const existingContracts = await readContracts();
+    let existingContracts = await readContracts();
+
+    if (!existingContracts || !Array.isArray(existingContracts)) {
+      existingContracts = [];
+    }
 
     // --- 0. PRE-PROCESS DATA ---
     const cleanAddress = newContract.address.toLowerCase().trim();
