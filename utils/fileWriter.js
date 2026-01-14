@@ -1,23 +1,21 @@
 const fs = require("fs").promises;
 const path = require("path");
 
-// Path to contracts file
 const CONTRACTS_FILE = path.join(__dirname, "../data/contracts.json");
 const TEMP_FILE = `${CONTRACTS_FILE}.tmp`;
 
-/**
- * Save contracts array to file
- * @param {Array} contracts - Array of contract objects
- */
+// ============================================
+// SAVE CONTRACTS
+// ============================================
 async function saveContracts(contracts) {
   try {
     const dir = path.dirname(CONTRACTS_FILE);
-
     await fs.mkdir(dir, { recursive: true });
 
     const jsonString = JSON.stringify(contracts, null, 2);
     await fs.writeFile(TEMP_FILE, jsonString, "utf8");
     await fs.rename(TEMP_FILE, CONTRACTS_FILE);
+
     console.log(`Contracts saved to: ${CONTRACTS_FILE}`);
   } catch (error) {
     console.log("Error saving contracts:", error.message);
@@ -28,10 +26,9 @@ async function saveContracts(contracts) {
   }
 }
 
-/**
- * Add a new contract to the registry
- * @param {Object} newContract - { name, address, network, abi }
- */
+// ============================================
+// ADD CONTRACT
+// ============================================
 async function addContract(newContract) {
   try {
     const { readContracts } = require("./fileReader");
@@ -41,13 +38,12 @@ async function addContract(newContract) {
       existingContracts = [];
     }
 
-    // --- 0. PRE-PROCESS DATA ---
+    // Pre-process data
     const cleanAddress = newContract.address.toLowerCase().trim();
     const cleanName = newContract.name.trim();
     const cleanNetwork = newContract.network.toLowerCase().trim();
 
-    // --- 1. GLOBAL NAME GUARD ---
-    // Names must be unique across the entire registry to avoid command ambiguity
+    // Check for duplicate names
     const nameExistsAnywhere = existingContracts.find(
       (c) => c.name.toLowerCase() === cleanName.toLowerCase()
     );
@@ -66,8 +62,7 @@ async function addContract(newContract) {
       return;
     }
 
-    // --- 2. ADDRESS GUARD (Network Specific) ---
-    // Check if this address already exists on this specific network
+    // Check for duplicate addresses on same network
     const addressConflict = existingContracts.find(
       (c) =>
         c.address.toLowerCase() === cleanAddress &&
@@ -87,7 +82,7 @@ async function addContract(newContract) {
       );
     }
 
-    // --- 3. FINALIZATION ---
+    // Create and save contract
     const finalContract = {
       ...newContract,
       name: cleanName,
@@ -105,22 +100,19 @@ async function addContract(newContract) {
   }
 }
 
-/**
- * Update an existing contract
- * @param {string} contractName - Name of contract to update
- * @param {Object} updates - Object with properties to update
- */
+// ============================================
+// UPDATE CONTRACT
+// ============================================
 async function updateContract(contractName, updates) {
   try {
     const { readContracts } = require("./fileReader");
-
     const existingContracts = await readContracts();
-
     const cleanName = contractName.trim().toLowerCase();
 
     const index = existingContracts.findIndex(
       (c) => c.name.toLowerCase() === cleanName
     );
+
     if (index === -1) {
       console.log(`Contract "${contractName}" not found`);
       return;
@@ -128,6 +120,7 @@ async function updateContract(contractName, updates) {
 
     existingContracts[index] = { ...existingContracts[index], ...updates };
     await saveContracts(existingContracts);
+
     console.log(
       `Success: Contract "${existingContracts[index].name}" updated.`
     );
@@ -137,19 +130,14 @@ async function updateContract(contractName, updates) {
   }
 }
 
-/**
- * Delete a contract
- * @param {string} contractName - Name of contract to delete
- */
-/**
- * Delete a contract and its associated ABI file
- * @param {string} contractName - Name of contract to delete
- */
+// ============================================
+// DELETE CONTRACT
+// ============================================
 async function deleteContract(contractName) {
   try {
     const { readContracts } = require("./fileReader");
-
     const existingContracts = await readContracts();
+
     const index = existingContracts.findIndex(
       (c) => c.name.toLowerCase() === contractName.toLowerCase()
     );
@@ -159,26 +147,22 @@ async function deleteContract(contractName) {
       return;
     }
 
-    // 1. Identify the ABI file before removing the record
+    // Get ABI file path before deletion
     const contractToDelete = existingContracts[index];
     const abiRelativePath = contractToDelete.abi;
 
-    // 2. Remove the record from the array
+    // Remove from registry
     existingContracts.splice(index, 1);
-
-    // 3. Save the updated registry
     await saveContracts(existingContracts);
 
-    // 4. Physical Cleanup: Delete the ABI file if it exists
+    // Delete ABI file if exists
     if (abiRelativePath) {
-      // Resolve path relative to your data folder
       const fullPath = path.resolve(__dirname, "../data", abiRelativePath);
 
       try {
         await fs.unlink(fullPath);
         console.log(`ABI file "${abiRelativePath}" cleaned up.`);
       } catch (fileErr) {
-        // If the file was already missing, we don't want to crash the whole process
         console.log(
           `Note: Could not delete ABI file (it may have been moved or already deleted).`
         );
@@ -192,45 +176,29 @@ async function deleteContract(contractName) {
   }
 }
 
-/**
- * Copies a user's ABI file into the local Clinch vault.
- * @param {string} userPath - The path provided by the user (e.g., ./out/Contract.json)
- * @param {string} name - Contract name for the filename
- * @param {string} address - Contract address for unique identification
- * @returns {string|null} - The relative path to the saved ABI or null if it fails
- */
-
+// ============================================
+// CAPTURE ABI
+// ============================================
 async function captureAbi(userPath, name, address) {
   try {
     const abiPath = path.resolve(process.cwd(), userPath);
-
-    // 2. Define the destination vault directory
     const vaultDir = path.join(__dirname, "../data/abis");
-
-    // 3. Create a unique filename to prevent collisions
     const fileName = `${name}-${address.slice(0, 6).toLowerCase()}.json`;
     const destinationPath = path.join(vaultDir, fileName);
 
-    // 4. Ensure the vault directory exists (creates it if missing)
     await fs.mkdir(vaultDir, { recursive: true });
-
-    // 5. Physically copy the file
     await fs.copyFile(abiPath, destinationPath);
 
-    // 6. Return the relative path to be stored in contracts.json
     return `abis/${fileName}`;
   } catch (error) {
-    console.log(`\x1b[31mError capturing ABI:\x1b[0m ${error.message}`);
+    console.log(`Error capturing ABI: ${error.message}`);
     return null;
   }
 }
 
-/**
- * Search contracts by name or address
- * @param {string} query - Search term
- * @param {Object} options - Filter options
- */
-
+// ============================================
+// FIND CONTRACTS
+// ============================================
 async function findContracts(query, options = {}) {
   try {
     const { readContracts } = require("./fileReader");
@@ -243,16 +211,14 @@ async function findContracts(query, options = {}) {
 
     let results = contracts;
 
-    // Filter by search query (name or address)
+    // Filter by query (name or address)
     if (query) {
       const lowerQuery = query.toLowerCase();
-
       results = results.filter((contract) => {
         const nameMatch = contract.name.toLowerCase().includes(lowerQuery);
         const addressMatch = contract.address
           .toLowerCase()
           .includes(lowerQuery);
-
         return nameMatch || addressMatch;
       });
     }
@@ -269,7 +235,7 @@ async function findContracts(query, options = {}) {
 
     // Display results
     if (results.length === 0) {
-      console.log("❌ No contracts found matching your search.");
+      console.log("No contracts found matching your search.");
       console.log("\nTry:");
       console.log("  - Different search term");
       console.log("  - Remove filters");
@@ -277,25 +243,45 @@ async function findContracts(query, options = {}) {
       return;
     }
 
-    console.log(`\n✅ Found ${results.length} contract(s):\n`);
+    console.log(`\nFound ${results.length} contract(s):\n`);
 
-    // Format results
+    // Table header
+    console.log(
+      "┌─────┬──────────────────────┬──────────────────────────────────────────────┬──────────────┬────────────┬─────────────────────────┐"
+    );
+    console.log(
+      "│ No. │ Name                 │ Address                                      │ Network      │ Verified   │ ABI                     │"
+    );
+    console.log(
+      "├─────┼──────────────────────┼──────────────────────────────────────────────┼──────────────┼────────────┼─────────────────────────┤"
+    );
+
+    // Table rows
     results.forEach((contract, index) => {
-      const verified = contract.verified ? "[Verified]" : "[Not Verified]";
-      const shortAddr = contract.address.slice(0, 10) + "...";
+      const num = String(index + 1).padEnd(3);
+      const name = contract.name.padEnd(20).slice(0, 20);
+      const addr = contract.address.padEnd(44);
+      const network = contract.network.padEnd(12).slice(0, 12);
+      const verified = contract.verified ? "Yes".padEnd(10) : "No".padEnd(10);
+      const abi = (contract.abi || "N/A").padEnd(23).slice(0, 23);
 
-      console.log(`${index + 1}. ${verified} ${contract.name}`);
-      console.log(`   Address: ${shortAddr}`);
-      console.log(`   Network: ${contract.network}`);
-      console.log("");
+      console.log(
+        `│ ${num} │ ${name} │ ${addr} │ ${network} │ ${verified} │ ${abi} │`
+      );
     });
 
-    console.log(`Total: ${results.length} contract(s)\n`);
+    console.log(
+      "└─────┴──────────────────────┴──────────────────────────────────────────────┴──────────────┴────────────┴─────────────────────────┘"
+    );
+    console.log(`\nTotal: ${results.length} contract(s)\n`);
   } catch (error) {
     console.error("Error searching contracts:", error.message);
   }
 }
 
+// ============================================
+// EXPORTS
+// ============================================
 module.exports = {
   saveContracts,
   addContract,

@@ -1,16 +1,25 @@
 [
   {
-    "name": "USDC",
-    "address": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
-    "network": "mainnet",
-    "verified": true,
-    "deployedAt": 1652380800
-  },
-  {
     "name": "TestToken",
     "address": "0x123abc456def",
     "network": "sepolia",
     "verified": false,
     "deployedAt": 1699920000
+  },
+  {
+    "name": "SimpleToken",
+    "address": "0x5fbdb2315678afecb367f032d93f642f64180aa3",
+    "network": "anvil",
+    "abi": "abis/SimpleToken-0x5fbd.json",
+    "verified": false,
+    "deployedAt": 1768407428,
+    "txHash": "0x53edd96c53fb0f86839b5c17c25f2526e72dea16d45dd65d1312b73c767a1cbe"
+  },
+  {
+    "name": "SIMPLETOKEN_ANVIL",
+    "address": "0x5fbdb2315678afecb367f032d93f642f64180aa3",
+    "network": "anvil",
+    "verified": false,
+    "deployedAt": 1768407982
   }
 ]
