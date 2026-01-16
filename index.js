@@ -295,7 +295,7 @@ program
   .action(async () => {
     try {
       const fs = require("fs").promises;
-      const dataDir = path.join(__dirname, "../data");
+      const dataDir = path.join(process.cwd(), "../data");
       const abiDir = path.join(dataDir, "abis");
       const contractsFile = path.join(dataDir, "contracts.json");
 

@@ -21,5 +21,12 @@
     "network": "anvil",
     "verified": false,
     "deployedAt": 1768407982
+  },
+  {
+    "name": "TestContract",
+    "address": "0x1234567890123456789012345678901234567890",
+    "network": "anvil",
+    "verified": true,
+    "deployedAt": 1768492109
   }
 ]
