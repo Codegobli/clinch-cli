@@ -3,7 +3,8 @@ const path = require("path");
 
 async function readContracts() {
   try {
-    const filePath = path.join(__dirname, "../data/contracts.json");
+    const CLINCH_DIR = path.join(process.cwd(), ".clinch");
+    const filePath = path.join(CLINCH_DIR, "contracts.json");
     const data = await fs.readFile(filePath, "utf8");
     const contracts = JSON.parse(data);
     return contracts;
@@ -12,11 +13,6 @@ async function readContracts() {
     return [];
   }
 }
-
-// Test it
-readContracts().then((contracts) => {
-  console.log("Contracts loaded");
-});
 
 module.exports = {
   readContracts,

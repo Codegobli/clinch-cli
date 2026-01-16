@@ -1,7 +1,8 @@
 const fs = require("fs").promises;
 const path = require("path");
 
-const CONTRACTS_FILE = path.join(__dirname, "../data/contracts.json");
+const CLINCH_DIR = path.join(process.cwd(), ".clinch");
+const CONTRACTS_FILE = path.join(CLINCH_DIR, "contracts.json");
 const TEMP_FILE = `${CONTRACTS_FILE}.tmp`;
 
 // ============================================
@@ -157,7 +158,7 @@ async function deleteContract(contractName) {
 
     // Delete ABI file if exists
     if (abiRelativePath) {
-      const fullPath = path.resolve(__dirname, "../data", abiRelativePath);
+      const fullPath = path.join(CLINCH_DIR, abiRelativePath);
 
       try {
         await fs.unlink(fullPath);
@@ -182,7 +183,7 @@ async function deleteContract(contractName) {
 async function captureAbi(userPath, name, address) {
   try {
     const abiPath = path.resolve(process.cwd(), userPath);
-    const vaultDir = path.join(__dirname, "../data/abis");
+    const vaultDir = path.join(CLINCH_DIR, "abis");
     const fileName = `${name}-${address.slice(0, 6).toLowerCase()}.json`;
     const destinationPath = path.join(vaultDir, fileName);
 
