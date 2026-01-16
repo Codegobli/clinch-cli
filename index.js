@@ -274,15 +274,31 @@ program
 // SYNC COMMAND (Foundry Integration)
 // ============================================
 program
-  .command("sync <broadcastPath>")
+  .command("sync")
   .description("Sync contracts from Foundry broadcast file")
-  .action(async (broadcastPath) => {
+  .option("-b, --broadcast <path>", "Manual path to foundry broadcast JSON")
+  .action(async (options) => {
     try {
-      const resolvedPath = path.resolve(process.cwd(), broadcastPath);
-      await syncFromFoundry(resolvedPath);
+      let targetPath = options.broadcast;
+
+      // If no path was typed, try to find it automatically
+      if (!targetPath) {
+        const { findLatestBroadcast } = require("./utils/clinchSync");
+        targetPath = await findLatestBroadcast();
+      }
+
+      if (!targetPath) {
+        console.log("❌ Could not find a broadcast file automatically.");
+        console.log(
+          "Please specify one: clinch sync -b ./path/to/run-latest.json"
+        );
+        return;
+      }
+
+      console.log(`📡 Syncing from: ${targetPath}`);
+      await syncFromFoundry(path.resolve(process.cwd(), targetPath));
     } catch (error) {
-      console.error("Error syncing from Foundry:", error.message);
-      process.exit(1);
+      console.error("Error:", error.message);
     }
   });
 
