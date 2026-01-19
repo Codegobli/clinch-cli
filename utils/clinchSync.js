@@ -2,6 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const { parseBroadCastInfo } = require("./foundryParser");
 const { addContract } = require("./fileWriter");
+const { triggerGitSync } = require("./gitUtils");
 
 async function syncFromFoundry(broadcastPath) {
   console.log("🔍Syncing from Foundry broadcast...");
@@ -24,6 +25,10 @@ async function syncFromFoundry(broadcastPath) {
     }
   }
 
+  if (syncCount > 0) {
+    await triggerGitSync(newContracts);
+  }
+
   console.log(`\n Sync complete! Added ${syncCount} contracts.`);
 }
 
@@ -37,8 +42,6 @@ async function findLatestBroadcast() {
   const scripts = fs.readdirSync(broadcastDir);
   if (scripts.length === 0) return null;
 
-  // 3. For now, let's just grab the first script folder and the first chain ID
-  // We can make this "smarter" later, but this gets us to "Auto"
   const firstScript = scripts[0];
   const scriptPath = path.join(broadcastDir, firstScript);
 
@@ -51,4 +54,23 @@ async function findLatestBroadcast() {
   return fs.existsSync(finalPath) ? finalPath : null;
 }
 
-module.exports = { syncFromFoundry, findLatestBroadcast };
+async function findLatestAbi(contractName) {
+  const expectedAbiPath = path.join(
+    "out",
+    `${contractName}.sol`,
+    `${contractName}.json`
+  );
+
+  if (fs.existsSync(expectedAbiPath)) {
+    const fileData = JSON.parse(fs.readFileSync(expectedAbiPath, "utf8"));
+
+    return fileData.abi;
+  }
+
+  console.warn(
+    `⚠️ Could not find artifact for ${contractName} at ${expectedAbiPath}`
+  );
+  return null;
+}
+
+module.exports = { syncFromFoundry, findLatestBroadcast, findLatestAbi };

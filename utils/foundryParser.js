@@ -5,6 +5,7 @@ async function parseBroadCastInfo(fileBroadCastPath) {
   try {
     const { getNetworkName } = require("./getNetwork");
     const { hasSecurityLeak } = require("./securityCheck");
+    const { findLatestAbi } = require("./clinchSync");
     const data = await fs.readFile(fileBroadCastPath, "utf8");
     const broadCastData = JSON.parse(data);
 
@@ -12,12 +13,28 @@ async function parseBroadCastInfo(fileBroadCastPath) {
 
     for (const tx of broadCastData.transactions) {
       if (tx.transactionType === "CREATE" && tx.contractName) {
-        const shortAddr = tx.contractAddress.slice(0, 6);
+        const contractName = tx.contractName;
+        const fileName = `${contractName}-${tx.contractAddress.slice(0, 6)}.json`;
+        const abiData = await findLatestAbi(contractName);
+        const parentPath = path.join(process.cwd(), ".clinch", "abis");
+        await fs.mkdir(parentPath, { recursive: true });
+
+        if (abiData) {
+          const savePath = path.join(
+            process.cwd(),
+            ".clinch",
+            "abis",
+            fileName
+          );
+
+          await fs.mkdir(parentPath, { recursive: true });
+          await fs.writeFile(savePath, JSON.stringify(abiData, null, 2));
+        }
         const contract = {
           name: tx.contractName,
           address: tx.contractAddress,
           network: getNetworkName(broadCastData.chain),
-          abi: `abis/${tx.contractName}-${shortAddr}.json`,
+          abi: `.clinch/abis/${fileName}`,
           verified: false,
           deployedAt: Math.floor(broadCastData.timestamp / 1000),
         };
