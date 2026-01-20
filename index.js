@@ -90,13 +90,13 @@ program
 
       // Table header
       console.log(
-        "┌─────┬──────────────────────┬──────────────────────────────────────────────┬──────────────┬────────────┬─────────────────────────┐"
+        "┌─────┬──────────────────────┬──────────────────────────────────────────────┬──────────────┬────────────┬─────────────────────────┐",
       );
       console.log(
-        "│ No. │ Name                 │ Address                                      │ Network      │ Verified   │ ABI                     │"
+        "│ No. │ Name                 │ Address                                      │ Network      │ Verified   │ ABI                     │",
       );
       console.log(
-        "├─────┼──────────────────────┼──────────────────────────────────────────────┼──────────────┼────────────┼─────────────────────────┤"
+        "├─────┼──────────────────────┼──────────────────────────────────────────────┼──────────────┼────────────┼─────────────────────────┤",
       );
 
       // Table rows
@@ -109,12 +109,12 @@ program
         const abi = (contract.abi || "N/A").padEnd(23).slice(0, 23);
 
         console.log(
-          `│ ${num} │ ${name} │ ${addr} │ ${network} │ ${verified} │ ${abi} │`
+          `│ ${num} │ ${name} │ ${addr} │ ${network} │ ${verified} │ ${abi} │`,
         );
       });
 
       console.log(
-        "└─────┴──────────────────────┴──────────────────────────────────────────────┴──────────────┴────────────┴─────────────────────────┘"
+        "└─────┴──────────────────────┴──────────────────────────────────────────────┴──────────────┴────────────┴─────────────────────────┘",
       );
       console.log(`\nTotal: ${filtered.length} contract(s)\n`);
     } catch (error) {
@@ -150,7 +150,7 @@ program
     try {
       const contracts = await readContracts();
       const contract = contracts.find(
-        (c) => c.name.toLowerCase() === name.toLowerCase()
+        (c) => c.name.toLowerCase() === name.toLowerCase(),
       );
 
       if (!contract) {
@@ -211,7 +211,7 @@ program
         const abiPath = await captureAbi(
           options.abi,
           name,
-          options.address || ""
+          options.address || "",
         );
         if (abiPath) {
           updates.abi = abiPath;
@@ -258,7 +258,7 @@ program
             }
 
             await deleteContract(name);
-          }
+          },
         );
       } else {
         await deleteContract(name);
@@ -276,6 +276,7 @@ program
   .command("sync")
   .description("Sync contracts from Foundry broadcast file")
   .option("-b, --broadcast <path>", "Manual path to foundry broadcast JSON")
+  .option("--git", "Commit and push changes to GitHub")
   .action(async (options) => {
     try {
       let targetPath = options.broadcast;
@@ -287,17 +288,26 @@ program
       }
 
       if (!targetPath) {
-        console.log("❌ Could not find a broadcast file automatically.");
+        console.log("Could not find a broadcast file automatically.");
         console.log(
-          "Please specify one: clinch sync -b ./path/to/run-latest.json"
+          "Please specify one: clinch sync -b ./path/to/run-latest.json",
         );
         return;
       }
 
       console.log(`📡 Syncing from: ${targetPath}`);
-      await syncFromFoundry(path.resolve(process.cwd(), targetPath));
+
+      const resolvedPath = path.resolve(process.cwd(), targetPath);
+      const syncedContracts = await syncFromFoundry(resolvedPath);
+
+      // Only trigger git sync if --git flag is present
+      if (options.git && syncedContracts.length > 0) {
+        const { triggerGitSync } = require("./utils/gitUtils");
+        await triggerGitSync(syncedContracts, true);
+      }
     } catch (error) {
-      console.error("Error:", error.message);
+      console.error("Error syncing from Foundry:", error.message);
+      process.exit(1);
     }
   });
 

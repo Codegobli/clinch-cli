@@ -5,6 +5,7 @@ const { addContract } = require("./fileWriter");
 const { triggerGitSync } = require("./gitUtils");
 
 async function syncFromFoundry(broadcastPath) {
+  console.log("📍 CLI is currently looking at:", process.cwd());
   console.log("🔍Syncing from Foundry broadcast...");
 
   const newContracts = await parseBroadCastInfo(broadcastPath);
@@ -30,6 +31,7 @@ async function syncFromFoundry(broadcastPath) {
   }
 
   console.log(`\n Sync complete! Added ${syncCount} contracts.`);
+  return newContracts;
 }
 
 async function findLatestBroadcast() {
@@ -58,7 +60,7 @@ async function findLatestAbi(contractName) {
   const expectedAbiPath = path.join(
     "out",
     `${contractName}.sol`,
-    `${contractName}.json`
+    `${contractName}.json`,
   );
 
   if (fs.existsSync(expectedAbiPath)) {
@@ -68,7 +70,7 @@ async function findLatestAbi(contractName) {
   }
 
   console.warn(
-    `⚠️ Could not find artifact for ${contractName} at ${expectedAbiPath}`
+    `⚠️ Could not find artifact for ${contractName} at ${expectedAbiPath}`,
   );
   return null;
 }
