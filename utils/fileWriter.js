@@ -1,13 +1,21 @@
 const fs = require("fs").promises;
 const path = require("path");
 
+// ============================================
+// CONSTANTS
+// ============================================
 const CLINCH_DIR = path.join(process.cwd(), ".clinch");
 const CONTRACTS_FILE = path.join(CLINCH_DIR, "contracts.json");
 const TEMP_FILE = `${CONTRACTS_FILE}.tmp`;
 
 // ============================================
-// SAVE CONTRACTS
+// CORE OPERATIONS
 // ============================================
+
+/**
+ * Save contracts array to .clinch/contracts.json
+ * Uses temp file for atomic writes
+ */
 async function saveContracts(contracts) {
   try {
     const dir = path.dirname(CONTRACTS_FILE);
@@ -27,9 +35,10 @@ async function saveContracts(contracts) {
   }
 }
 
-// ============================================
-// ADD CONTRACT
-// ============================================
+/**
+ * Add a new contract to the registry
+ * Handles name/address conflicts and creates aliases
+ */
 async function addContract(newContract) {
   try {
     const { readContracts } = require("./fileReader");
@@ -39,51 +48,51 @@ async function addContract(newContract) {
       existingContracts = [];
     }
 
-    // Pre-process data
+    // Clean and normalize input
     const cleanAddress = newContract.address.toLowerCase().trim();
     const cleanName = newContract.name.trim();
     const cleanNetwork = newContract.network.toLowerCase().trim();
 
-    // Check for duplicate names
-    const nameExistsAnywhere = existingContracts.find(
-      (c) => c.name.toLowerCase() === cleanName.toLowerCase()
+    // Check for duplicate names globally
+    const nameConflict = existingContracts.find(
+      (c) => c.name.toLowerCase() === cleanName.toLowerCase(),
     );
 
-    if (nameExistsAnywhere) {
+    if (nameConflict) {
       console.log(`\n[Error] The name "${cleanName}" is already taken.`);
       console.log(
-        `Info: It currently points to ${nameExistsAnywhere.address} on ${nameExistsAnywhere.network}.`
+        `Info: It currently points to ${nameConflict.address} on ${nameConflict.network}.`,
       );
 
       const suggestedName = `${cleanName}_${cleanNetwork}`.toUpperCase();
       console.log(`\nSuggestion: Try using a network-specific name:`);
       console.log(
-        `  clinch add ${suggestedName} ${cleanAddress} ${cleanNetwork}`
+        `  clinch add ${suggestedName} ${cleanAddress} ${cleanNetwork}`,
       );
       return;
     }
 
-    // Check for duplicate addresses on same network
+    // Check for duplicate addresses on same network (allow aliases)
     const addressConflict = existingContracts.find(
       (c) =>
         c.address.toLowerCase() === cleanAddress &&
-        c.network.toLowerCase() === cleanNetwork
+        c.network.toLowerCase() === cleanNetwork,
     );
 
     if (addressConflict) {
       console.log(`\n[Alias Detected]`);
       console.log(
-        `  - Address ${cleanAddress} is already registered as "${addressConflict.name}" on ${cleanNetwork}.`
+        `  - Address ${cleanAddress} is already registered as "${addressConflict.name}" on ${cleanNetwork}.`,
       );
       console.log(
-        `  - Registering "${cleanName}" as a secondary alias for this contract.`
+        `  - Registering "${cleanName}" as a secondary alias for this contract.`,
       );
       console.log(
-        `\nNote: You can now use either '${addressConflict.name}' or '${cleanName}' for calls.`
+        `\nNote: You can now use either '${addressConflict.name}' or '${cleanName}' for calls.`,
       );
     }
 
-    // Create and save contract
+    // Create final contract object
     const finalContract = {
       ...newContract,
       name: cleanName,
@@ -101,9 +110,9 @@ async function addContract(newContract) {
   }
 }
 
-// ============================================
-// UPDATE CONTRACT
-// ============================================
+/**
+ * Update an existing contract's properties
+ */
 async function updateContract(contractName, updates) {
   try {
     const { readContracts } = require("./fileReader");
@@ -111,7 +120,7 @@ async function updateContract(contractName, updates) {
     const cleanName = contractName.trim().toLowerCase();
 
     const index = existingContracts.findIndex(
-      (c) => c.name.toLowerCase() === cleanName
+      (c) => c.name.toLowerCase() === cleanName,
     );
 
     if (index === -1) {
@@ -123,7 +132,7 @@ async function updateContract(contractName, updates) {
     await saveContracts(existingContracts);
 
     console.log(
-      `Success: Contract "${existingContracts[index].name}" updated.`
+      `Success: Contract "${existingContracts[index].name}" updated.`,
     );
   } catch (error) {
     console.log("Error updating contract:", error.message);
@@ -131,16 +140,16 @@ async function updateContract(contractName, updates) {
   }
 }
 
-// ============================================
-// DELETE CONTRACT
-// ============================================
+/**
+ * Delete a contract and its ABI file
+ */
 async function deleteContract(contractName) {
   try {
     const { readContracts } = require("./fileReader");
     const existingContracts = await readContracts();
 
     const index = existingContracts.findIndex(
-      (c) => c.name.toLowerCase() === contractName.toLowerCase()
+      (c) => c.name.toLowerCase() === contractName.toLowerCase(),
     );
 
     if (index === -1) {
@@ -148,7 +157,6 @@ async function deleteContract(contractName) {
       return;
     }
 
-    // Get ABI file path before deletion
     const contractToDelete = existingContracts[index];
     const abiRelativePath = contractToDelete.abi;
 
@@ -156,7 +164,7 @@ async function deleteContract(contractName) {
     existingContracts.splice(index, 1);
     await saveContracts(existingContracts);
 
-    // Delete ABI file if exists
+    // Delete associated ABI file
     if (abiRelativePath) {
       const fullPath = path.join(CLINCH_DIR, abiRelativePath);
 
@@ -165,7 +173,7 @@ async function deleteContract(contractName) {
         console.log(`ABI file "${abiRelativePath}" cleaned up.`);
       } catch (fileErr) {
         console.log(
-          `Note: Could not delete ABI file (it may have been moved or already deleted).`
+          `Note: Could not delete ABI file (it may have been moved or already deleted).`,
         );
       }
     }
@@ -178,8 +186,13 @@ async function deleteContract(contractName) {
 }
 
 // ============================================
-// CAPTURE ABI
+// ABI MANAGEMENT
 // ============================================
+
+/**
+ * Copy user's ABI file into .clinch/abis/ vault
+ * Returns relative path for storage in contracts.json
+ */
 async function captureAbi(userPath, name, address) {
   try {
     const abiPath = path.resolve(process.cwd(), userPath);
@@ -198,8 +211,13 @@ async function captureAbi(userPath, name, address) {
 }
 
 // ============================================
-// FIND CONTRACTS
+// SEARCH & DISPLAY
 // ============================================
+
+/**
+ * Search and display contracts with filters
+ * Shows results in table format
+ */
 async function findContracts(query, options = {}) {
   try {
     const { readContracts } = require("./fileReader");
@@ -212,7 +230,7 @@ async function findContracts(query, options = {}) {
 
     let results = contracts;
 
-    // Filter by query (name or address)
+    // Apply search query filter
     if (query) {
       const lowerQuery = query.toLowerCase();
       results = results.filter((contract) => {
@@ -224,17 +242,17 @@ async function findContracts(query, options = {}) {
       });
     }
 
-    // Filter by network
+    // Apply network filter
     if (options.network) {
       results = results.filter((c) => c.network === options.network);
     }
 
-    // Filter by verified status
+    // Apply verified filter
     if (options.verified !== undefined) {
       results = results.filter((c) => c.verified === options.verified);
     }
 
-    // Display results
+    // Handle no results
     if (results.length === 0) {
       console.log("No contracts found matching your search.");
       console.log("\nTry:");
@@ -244,20 +262,19 @@ async function findContracts(query, options = {}) {
       return;
     }
 
+    // Display table
     console.log(`\nFound ${results.length} contract(s):\n`);
 
-    // Table header
     console.log(
-      "┌─────┬──────────────────────┬──────────────────────────────────────────────┬──────────────┬────────────┬─────────────────────────┐"
+      "┌─────┬──────────────────────┬──────────────────────────────────────────────┬──────────────┬────────────┬─────────────────────────┐",
     );
     console.log(
-      "│ No. │ Name                 │ Address                                      │ Network      │ Verified   │ ABI                     │"
+      "│ No. │ Name                 │ Address                                      │ Network      │ Verified   │ ABI                     │",
     );
     console.log(
-      "├─────┼──────────────────────┼──────────────────────────────────────────────┼──────────────┼────────────┼─────────────────────────┤"
+      "├─────┼──────────────────────┼──────────────────────────────────────────────┼──────────────┼────────────┼─────────────────────────┤",
     );
 
-    // Table rows
     results.forEach((contract, index) => {
       const num = String(index + 1).padEnd(3);
       const name = contract.name.padEnd(20).slice(0, 20);
@@ -267,12 +284,12 @@ async function findContracts(query, options = {}) {
       const abi = (contract.abi || "N/A").padEnd(23).slice(0, 23);
 
       console.log(
-        `│ ${num} │ ${name} │ ${addr} │ ${network} │ ${verified} │ ${abi} │`
+        `│ ${num} │ ${name} │ ${addr} │ ${network} │ ${verified} │ ${abi} │`,
       );
     });
 
     console.log(
-      "└─────┴──────────────────────┴──────────────────────────────────────────────┴──────────────┴────────────┴─────────────────────────┘"
+      "└─────┴──────────────────────┴──────────────────────────────────────────────┴──────────────┴────────────┴─────────────────────────┘",
     );
     console.log(`\nTotal: ${results.length} contract(s)\n`);
   } catch (error) {

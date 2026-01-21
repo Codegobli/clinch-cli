@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 const { Command } = require("commander");
 const path = require("path");
 const {
@@ -17,6 +18,137 @@ program
   .name("clinch")
   .description("CLI tool for managing smart contract deployments")
   .version("1.0.0");
+
+// ============================================
+// VIEW COMMAND (Card-style display)
+// ============================================
+program
+  .command("view [name]")
+  .description("View contracts in a user-friendly card format")
+  .option("-n, --network <network>", "Filter by network")
+  .action(async (name, options) => {
+    try {
+      const contracts = await readContracts();
+
+      if (contracts.length === 0) {
+        console.log("No contracts found. Add some with: clinch add");
+        return;
+      }
+
+      let filtered = contracts;
+
+      // Filter by name if provided
+      if (name) {
+        filtered = filtered.filter((c) =>
+          c.name.toLowerCase().includes(name.toLowerCase()),
+        );
+      }
+
+      // Filter by network
+      if (options.network) {
+        filtered = filtered.filter((c) => c.network === options.network);
+      }
+
+      if (filtered.length === 0) {
+        console.log("No contracts match your filters.");
+        return;
+      }
+
+      // Helper functions
+      const getNetworkDisplay = (network) => {
+        const networkMap = {
+          anvil: "Local Testnet (Anvil)",
+          sepolia: "Sepolia Testnet",
+          mainnet: "Ethereum Mainnet",
+          arbitrum: "Arbitrum One",
+          optimism: "Optimism Mainnet",
+          polygon: "Polygon Mainnet",
+          base: "Base Mainnet",
+        };
+        return (
+          networkMap[network] ||
+          network.charAt(0).toUpperCase() + network.slice(1)
+        );
+      };
+
+      const getExplorerUrl = (address, network) => {
+        const explorers = {
+          anvil: "http://localhost:8545",
+          sepolia: `https://sepolia.etherscan.io/address/${address}`,
+          mainnet: `https://etherscan.io/address/${address}`,
+          arbitrum: `https://arbiscan.io/address/${address}`,
+          optimism: `https://optimistic.etherscan.io/address/${address}`,
+          polygon: `https://polygonscan.com/address/${address}`,
+          base: `https://basescan.org/address/${address}`,
+        };
+        return explorers[network] || "N/A";
+      };
+
+      const formatDate = (timestamp) => {
+        if (!timestamp) return "Unknown";
+        const date = new Date(timestamp * 1000);
+        return date.toLocaleString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        });
+      };
+
+      const shortenAddress = (addr) => {
+        return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+      };
+
+      // Display cards
+      console.log("\n");
+      filtered.forEach((contract, index) => {
+        const networkDisplay = getNetworkDisplay(contract.network);
+        const explorerUrl = getExplorerUrl(contract.address, contract.network);
+        const deployedDate = formatDate(contract.deployedAt);
+        const status = contract.verified ? "✓ Verified" : "✗ Not Verified";
+        const shortAddr = shortenAddress(contract.address);
+
+        console.log(
+          "╔════════════════════════════════════════════════════════╗",
+        );
+        console.log(`║  ${contract.name.padEnd(52)} ║`);
+        console.log(
+          "╠════════════════════════════════════════════════════════╣",
+        );
+        console.log(`║  Network: ${networkDisplay.padEnd(45)} ║`);
+        console.log(`║  Address: ${shortAddr.padEnd(45)} ║`);
+        console.log(`║  Full Address: ${contract.address.padEnd(37)} ║`);
+        console.log(`║  Deployed: ${deployedDate.padEnd(44)} ║`);
+        console.log(`║  Status: ${status.padEnd(46)} ║`);
+
+        if (contract.abi) {
+          console.log(`║  ABI: ${contract.abi.padEnd(49)} ║`);
+        }
+
+        console.log(
+          "║                                                        ║",
+        );
+        console.log(
+          "║  🔗 View on Explorer:                                  ║",
+        );
+        console.log(`║  ${explorerUrl.padEnd(52)} ║`);
+        console.log(
+          "╚════════════════════════════════════════════════════════╝",
+        );
+
+        if (index < filtered.length - 1) {
+          console.log(""); // Space between cards
+        }
+      });
+
+      console.log(`\nTotal: ${filtered.length} contract(s)\n`);
+    } catch (error) {
+      console.error("Error viewing contracts:", error.message);
+      process.exit(1);
+    }
+  });
 
 // ============================================
 // ADD COMMAND
@@ -302,7 +434,7 @@ program
 
       // Only trigger git sync if --git flag is present
       if (options.git && syncedContracts.length > 0) {
-        const { triggerGitSync } = require("./utils/gitUtils");
+        const { triggerGitSync } = require("./utils/gitSync");
         await triggerGitSync(syncedContracts, true);
       }
     } catch (error) {
@@ -320,9 +452,9 @@ program
   .action(async () => {
     try {
       const fs = require("fs").promises;
-      const dataDir = path.join(process.cwd(), "../data");
-      const abiDir = path.join(dataDir, "abis");
-      const contractsFile = path.join(dataDir, "contracts.json");
+      const clinchDir = path.join(process.cwd(), ".clinch");
+      const abiDir = path.join(clinchDir, "abis");
+      const contractsFile = path.join(clinchDir, "contracts.json");
 
       // Create directories
       await fs.mkdir(abiDir, { recursive: true });
@@ -330,11 +462,17 @@ program
       // Create empty contracts file if it doesn't exist
       try {
         await fs.access(contractsFile);
-        console.log("Clinch is already initialized");
+        console.log("Clinch is already initialized in this directory");
       } catch {
         await fs.writeFile(contractsFile, "[]", "utf8");
         console.log("Clinch initialized successfully!");
-        console.log(`Data directory: ${dataDir}`);
+        console.log(`Registry location: ${clinchDir}`);
+        console.log("\nNext steps:");
+        console.log("  1. Deploy contracts with Foundry");
+        console.log(
+          "  2. Run: clinch sync broadcast/YourScript.s.sol/[chainId]/run-latest.json",
+        );
+        console.log("  3. Commit .clinch/ to Git to share with your team");
       }
     } catch (error) {
       console.error("Error initializing Clinch:", error.message);
