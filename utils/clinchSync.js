@@ -15,7 +15,7 @@ const { addContract } = require("./fileWriter");
  * @returns {Array} Successfully synced contracts
  */
 async function syncFromFoundry(broadcastPath) {
-  console.log("📍 CLI is currently looking at:", process.cwd());
+  console.log(" CLI is currently looking at:", process.cwd());
   console.log("🔍 Syncing from Foundry broadcast...");
 
   const newContracts = await parseBroadCastInfo(broadcastPath);
@@ -59,7 +59,7 @@ async function findLatestBroadcast() {
   // Check if broadcast folder exists
   if (!fs.existsSync(broadcastDir)) {
     console.log(`\n⚠️  No 'broadcast' folder found in current directory`);
-    console.log(`📍 Currently looking in: ${process.cwd()}`);
+    console.log(` Currently looking in: ${process.cwd()}`);
     console.log(
       `\n💡 Make sure you're in your Foundry project root, then try again.`,
     );
