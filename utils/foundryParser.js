@@ -60,15 +60,50 @@ async function parseBroadCastInfo(fileBroadCastPath) {
         if (!hasSecurityLeak(contract)) {
           contracts.push(contract);
         } else {
-          console.warn(`Skipping ${contract.name} due to security concerns.`);
+          console.log(`\n⚠️  SECURITY: Skipped "${contract.name}"`);
+          console.log(
+            `   Reason: Detected potential private key in broadcast file`,
+          );
+          console.log(
+            `   This is a safety feature to prevent accidental key exposure`,
+          );
+          console.log(
+            `\n Action: Check your deployment script for hardcoded private keys`,
+          );
+          console.log(
+            `   Use environment variables instead: process.env.PRIVATE_KEY`,
+          );
         }
       }
     }
 
     return contracts;
   } catch (error) {
-    console.error("Error parsing broadcast:", error.message);
-    return [];
+    console.log("\n❌ Failed to parse Foundry broadcast file");
+    console.log(`   File: ${fileBroadCastPath}`);
+
+    if (error.message.includes("JSON")) {
+      console.log(`\n Problem: Invalid JSON format`);
+      console.log(`   The broadcast file may be corrupted or incomplete`);
+      console.log(`\n Solutions:`);
+      console.log(
+        `   1. Re-run your deployment: forge script script/Deploy.s.sol --broadcast`,
+      );
+      console.log(`   2. Check if deployment actually succeeded`);
+      console.log(`   3. Verify the file exists and is not empty`);
+    } else if (error.code === "ENOENT") {
+      console.log(`\n Problem: File not found`);
+      console.log(`   The broadcast file doesn't exist at this location`);
+      console.log(`\n Solutions:`);
+      console.log(
+        `   1. Deploy first: forge script script/Deploy.s.sol --broadcast`,
+      );
+      console.log(`   2. Check the path is correct`);
+      console.log(`   3. Run: clinch sync (without path to auto-detect)`);
+    } else {
+      console.log(`\n Problem: ${error.message}`);
+      console.log(`\n Try running your Foundry deployment again`);
+    }
   }
 }
 

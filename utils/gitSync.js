@@ -90,10 +90,34 @@ async function triggerGitSync(syncedContracts, shouldPush = false) {
 
     console.log("\n✅ Sync complete and reflected on GitHub!");
   } catch (error) {
-    console.log("\n❌ GitSync stopped.");
-    console.log(
-      "Possible reason: You might need to run 'git pull' manually if GitHub has changes you don't have.",
-    );
+    console.log("\n❌ Git sync failed");
+
+    // Detect specific error types
+    if (error.message.includes("not a git repository")) {
+      console.log("\n Problem: This folder is not a Git repository");
+      console.log("   Solution: Run 'git init' to initialize Git");
+    } else if (
+      error.message.includes("rejected") ||
+      error.message.includes("non-fast-forward")
+    ) {
+      console.log("\n Problem: GitHub has changes you don't have locally");
+      console.log("   Solution: Run 'git pull' then try syncing again");
+    } else if (error.message.includes("Could not resolve host")) {
+      console.log("\n Problem: No internet connection");
+      console.log("   Your changes are saved locally");
+      console.log("   Push manually later: git push origin <branch-name>");
+    } else if (
+      error.message.includes("Permission denied") ||
+      error.message.includes("authentication failed")
+    ) {
+      console.log("\n Problem: Git authentication failed");
+      console.log("   Solution: Check your GitHub credentials or SSH keys");
+    } else {
+      console.log("\n Problem: Git operation failed");
+      console.log(`   Details: ${error.message}`);
+      console.log("\n Your changes are still saved locally");
+      console.log("   You can push manually: git push origin <branch-name>");
+    }
   }
 }
 

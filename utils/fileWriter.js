@@ -106,7 +106,13 @@ async function addContract(newContract) {
 
     console.log(`\n[Success] Added "${cleanName}" to the registry.`);
   } catch (error) {
-    console.error("\n[Fatal Error] Could not add contract:", error.message);
+    console.log("\n❌ Failed to add contract");
+    console.log(`   Reason: ${error.message}`);
+    console.log(`\n Possible fixes:`);
+    console.log(`   1. Check if .clinch/ folder exists (run: clinch init)`);
+    console.log(`   2. Verify you have write permissions in this directory`);
+    console.log(`   3. Check if contracts.json is not corrupted`);
+    console.log(`\n Need help? Run: clinch list (to see current contracts)`);
   }
 }
 
@@ -205,8 +211,24 @@ async function captureAbi(userPath, name, address) {
 
     return `abis/${fileName}`;
   } catch (error) {
-    console.log(`Error capturing ABI: ${error.message}`);
-    return null;
+    if (error.code === "ENOENT") {
+      console.log(`\n⚠️  ABI file not found`);
+      console.log(`   Looking for: ${userPath}`);
+      console.log(`\n Solutions:`);
+      console.log(`   1. Compile first: forge build`);
+      console.log(`   2. Check the path is correct`);
+      console.log(`   3. Contract name should match the file name`);
+    } else if (error.code === "EACCES") {
+      console.log(`\n⚠️  Permission denied`);
+      console.log(`   Cannot access: ${userPath}`);
+      console.log(`\n Check file permissions`);
+    } else {
+      console.log(`\n⚠️  Failed to capture ABI`);
+      console.log(`   Reason: ${error.message}`);
+      console.log(`   Path: ${userPath}`);
+    }
+    console.log(`\n   Contract will be added without ABI`);
+    console.log(`   You can add it later: clinch update <name> --abi <path>`);
   }
 }
 

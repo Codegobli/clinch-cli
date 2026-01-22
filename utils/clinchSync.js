@@ -21,7 +21,12 @@ async function syncFromFoundry(broadcastPath) {
   const newContracts = await parseBroadCastInfo(broadcastPath);
 
   if (newContracts.length === 0) {
-    console.log("No new contracts found in this broadcast.");
+    console.log("\n No contracts found in this broadcast file");
+    console.log(`\n This could mean:`);
+    console.log(`   1. No CREATE transactions in this deployment`);
+    console.log(`   2. Only contract calls (not deployments)`);
+    console.log(`   3. Deployment may have failed`);
+    console.log(`\n Check your deployment output for errors`);
     return [];
   }
 
@@ -120,9 +125,13 @@ async function findLatestAbi(contractName) {
     return fileData.abi;
   }
 
-  console.warn(
-    `⚠️ Could not find artifact for ${contractName} at ${expectedAbiPath}`,
+  console.log(`\n⚠️  ABI not found for ${contractName}`);
+  console.log(`   Expected location: ${expectedAbiPath}`);
+  console.log(`\n This is not critical - contract will sync without ABI`);
+  console.log(
+    `   To add ABI later: clinch update ${contractName} --abi <path>`,
   );
+  console.log(`   Or compile: forge build`);
   return null;
 }
 

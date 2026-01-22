@@ -420,9 +420,19 @@ program
       }
 
       if (!targetPath) {
-        console.log("Could not find a broadcast file automatically.");
+        console.log("\n❌ Could not auto-detect broadcast file");
+        console.log(`\n Searched in: ${process.cwd()}/broadcast/`);
+        console.log(`\n Possible reasons:`);
         console.log(
-          "Please specify one: clinch sync -b ./path/to/run-latest.json",
+          `   1. Not in Foundry project root (check: ls foundry.toml)`,
+        );
+        console.log(
+          `   2. No deployments yet (run: forge script script/Deploy.s.sol --broadcast)`,
+        );
+        console.log(`   3. Broadcast folder doesn't exist`);
+        console.log(`\n Manual sync:`);
+        console.log(
+          `   clinch sync -b broadcast/YourScript.s.sol/31337/run-latest.json`,
         );
         return;
       }
@@ -462,7 +472,12 @@ program
       // Create empty contracts file if it doesn't exist
       try {
         await fs.access(contractsFile);
-        console.log("Clinch is already initialized in this directory");
+        console.log("\n✅ Clinch is already initialized");
+        console.log(`   Registry: ${clinchDir}`);
+        console.log(`\n To reset:`);
+        console.log(`   1. Backup: cp -r .clinch .clinch.backup`);
+        console.log(`   2. Delete: rm -rf .clinch`);
+        console.log(`   3. Re-init: clinch init`);
       } catch {
         await fs.writeFile(contractsFile, "[]", "utf8");
         console.log("Clinch initialized successfully!");

@@ -12,11 +12,23 @@ async function readContracts() {
     return contracts;
   } catch (error) {
     if (error.code === "ENOENT") {
-      // File doesn't exist yet - this is fine on first run
-      // Don't show error, just return empty array
+      // File doesn't exist - this is fine on first run
       return [];
+    } else if (error.message.includes("JSON")) {
+      console.log("\n❌ Contracts file is corrupted");
+      console.log(`   Location: ${CONTRACTS_FILE}`);
+      console.log(`\n Fix options:`);
+      console.log(`   1. Restore from backup: .clinch/contracts.json.backup`);
+      console.log(
+        `   2. Reset registry: rm .clinch/contracts.json && clinch init`,
+      );
+      console.log(`   3. Manual fix: Open the file and fix the JSON syntax`);
+    } else {
+      console.log("\n❌ Cannot read contracts file");
+      console.log(`   Reason: ${error.message}`);
+      console.log(`   Location: ${CONTRACTS_FILE}`);
+      console.log(`\n Check file permissions and try again`);
     }
-    console.log("Error reading contracts:", error.message);
     return [];
   }
 }
