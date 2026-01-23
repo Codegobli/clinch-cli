@@ -1,5 +1,6 @@
 const fs = require("fs").promises;
 const path = require("path");
+const chalk = require("chalk");
 
 // ============================================
 // CONSTANTS
@@ -25,9 +26,9 @@ async function saveContracts(contracts) {
     await fs.writeFile(TEMP_FILE, jsonString, "utf8");
     await fs.rename(TEMP_FILE, CONTRACTS_FILE);
 
-    console.log(`Contracts saved to: ${CONTRACTS_FILE}`);
+    console.log(chalk.gray(`Contracts saved to: ${CONTRACTS_FILE}`));
   } catch (error) {
-    console.log("Error saving contracts:", error.message);
+    console.log(chalk.red("Error saving contracts:", error.message));
     try {
       await fs.unlink(TEMP_FILE);
     } catch (e) {}
@@ -59,15 +60,23 @@ async function addContract(newContract) {
     );
 
     if (nameConflict) {
-      console.log(`\n[Error] The name "${cleanName}" is already taken.`);
       console.log(
-        `Info: It currently points to ${nameConflict.address} on ${nameConflict.network}.`,
+        chalk.red(`\n[Error] The name "${cleanName}" is already taken.`),
+      );
+      console.log(
+        chalk.gray(
+          `Info: It currently points to ${nameConflict.address} on ${nameConflict.network}.`,
+        ),
       );
 
       const suggestedName = `${cleanName}_${cleanNetwork}`.toUpperCase();
-      console.log(`\nSuggestion: Try using a network-specific name:`);
       console.log(
-        `  clinch add ${suggestedName} ${cleanAddress} ${cleanNetwork}`,
+        chalk.cyan(`\nSuggestion: Try using a network-specific name:`),
+      );
+      console.log(
+        chalk.bold(
+          `  clinch add ${suggestedName} ${cleanAddress} ${cleanNetwork}`,
+        ),
       );
       return;
     }
@@ -80,7 +89,7 @@ async function addContract(newContract) {
     );
 
     if (addressConflict) {
-      console.log(`\n[Alias Detected]`);
+      console.log(chalk.yellow("\n[Alias Detected]"));
       console.log(
         `  - Address ${cleanAddress} is already registered as "${addressConflict.name}" on ${cleanNetwork}.`,
       );
@@ -88,7 +97,9 @@ async function addContract(newContract) {
         `  - Registering "${cleanName}" as a secondary alias for this contract.`,
       );
       console.log(
-        `\nNote: You can now use either '${addressConflict.name}' or '${cleanName}' for calls.`,
+        chalk.gray(
+          `\nNote: You can now use either '${addressConflict.name}' or '${cleanName}' for calls.`,
+        ),
       );
     }
 
@@ -104,15 +115,19 @@ async function addContract(newContract) {
     existingContracts.push(finalContract);
     await saveContracts(existingContracts);
 
-    console.log(`\n[Success] Added "${cleanName}" to the registry.`);
+    console.log(
+      chalk.green(`\n[Success] Added "${cleanName}" to the registry.`),
+    );
   } catch (error) {
-    console.log("\n❌ Failed to add contract");
+    console.log(chalk.red("\n❌ Failed to add contract"));
     console.log(`   Reason: ${error.message}`);
-    console.log(`\n Possible fixes:`);
-    console.log(`   1. Check if .clinch/ folder exists (run: clinch init)`);
-    console.log(`   2. Verify you have write permissions in this directory`);
-    console.log(`   3. Check if contracts.json is not corrupted`);
-    console.log(`\n Need help? Run: clinch list (to see current contracts)`);
+    console.log(chalk.cyan("\n Possible fixes:"));
+    console.log("   1. Check if .clinch/ folder exists (run: clinch init)");
+    console.log("   2. Verify you have write permissions in this directory");
+    console.log("   3. Check if contracts.json is not corrupted");
+    console.log(
+      chalk.gray("\n Need help? Run: clinch list (to see current contracts)"),
+    );
   }
 }
 
@@ -130,7 +145,11 @@ async function updateContract(contractName, updates) {
     );
 
     if (index === -1) {
-      console.log(`Contract "${contractName}" not found`);
+      console.log(chalk.yellow(`\n❌ Contract "${contractName}" not found`));
+      console.log(chalk.cyan("\n Available options:"));
+      console.log("   - See all contracts: clinch list");
+      console.log(`   - Search contracts: clinch find ${contractName}`);
+      console.log("   - Contract names are case-insensitive");
       return;
     }
 
@@ -138,10 +157,12 @@ async function updateContract(contractName, updates) {
     await saveContracts(existingContracts);
 
     console.log(
-      `Success: Contract "${existingContracts[index].name}" updated.`,
+      chalk.green(
+        `Success: Contract "${existingContracts[index].name}" updated.`,
+      ),
     );
   } catch (error) {
-    console.log("Error updating contract:", error.message);
+    console.log(chalk.red("Error updating contract:"), error.message);
     throw error;
   }
 }
@@ -159,7 +180,10 @@ async function deleteContract(contractName) {
     );
 
     if (index === -1) {
-      console.log(`Contract "${contractName}" not found`);
+      console.log(chalk.yellow(`\n❌ Contract "${contractName}" not found`));
+      console.log(chalk.cyan("\n Available options:"));
+      console.log("   - See all contracts: clinch list");
+      console.log(`   - Search contracts: clinch find ${contractName}`);
       return;
     }
 
@@ -176,21 +200,20 @@ async function deleteContract(contractName) {
 
       try {
         await fs.unlink(fullPath);
-        console.log(`ABI file "${abiRelativePath}" cleaned up.`);
+        console.log(chalk.gray(`ABI file "${abiRelativePath}" cleaned up.`));
       } catch (fileErr) {
         console.log(
-          `Note: Could not delete ABI file (it may have been moved or already deleted).`,
+          chalk.gray(`(ABI file was already deleted or moved - this is fine)`),
         );
       }
     }
 
-    console.log(`Contract "${contractName}" deleted successfully`);
+    console.log(chalk.green(`Contract "${contractName}" deleted successfully`));
   } catch (error) {
-    console.log("Error deleting contract:", error.message);
+    console.log(chalk.red("Error deleting contract:"), error.message);
     throw error;
   }
 }
-
 // ============================================
 // ABI MANAGEMENT
 // ============================================
@@ -212,23 +235,24 @@ async function captureAbi(userPath, name, address) {
     return `abis/${fileName}`;
   } catch (error) {
     if (error.code === "ENOENT") {
-      console.log(`\n⚠️  ABI file not found`);
-      console.log(`   Looking for: ${userPath}`);
-      console.log(`\n Solutions:`);
-      console.log(`   1. Compile first: forge build`);
-      console.log(`   2. Check the path is correct`);
-      console.log(`   3. Contract name should match the file name`);
+      console.log(chalk.yellow("\n⚠️  ABI file not found"));
+      console.log(chalk.gray(`   Looking for: ${userPath}`));
+      console.log(chalk.cyan("\n💡 Solutions:"));
+      console.log("   1. Compile first: forge build");
+      console.log("   2. Check the path is correct");
+      console.log("   3. Contract name should match the file name");
     } else if (error.code === "EACCES") {
-      console.log(`\n⚠️  Permission denied`);
-      console.log(`   Cannot access: ${userPath}`);
-      console.log(`\n Check file permissions`);
+      console.log(chalk.yellow("\n⚠️  Permission denied"));
+      console.log(chalk.gray(`   Cannot access: ${userPath}`));
+      console.log(chalk.cyan("\n💡 Check file permissions"));
     } else {
-      console.log(`\n⚠️  Failed to capture ABI`);
+      console.log(chalk.yellow("\n⚠️  Failed to capture ABI"));
       console.log(`   Reason: ${error.message}`);
-      console.log(`   Path: ${userPath}`);
+      console.log(chalk.gray(`   Path: ${userPath}`));
     }
-    console.log(`\n   Contract will be added without ABI`);
-    console.log(`   You can add it later: clinch update <name> --abi <path>`);
+    console.log(chalk.gray("\n   Contract will be added without ABI"));
+    console.log("   You can add it later: clinch update <name> --abi <path>");
+    return null;
   }
 }
 

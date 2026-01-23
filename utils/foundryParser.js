@@ -1,5 +1,6 @@
 const fs = require("fs").promises;
 const path = require("path");
+const chalk = require("chalk");
 
 // ============================================
 // BROADCAST PARSING
@@ -60,18 +61,29 @@ async function parseBroadCastInfo(fileBroadCastPath) {
         if (!hasSecurityLeak(contract)) {
           contracts.push(contract);
         } else {
-          console.log(`\n⚠️  SECURITY: Skipped "${contract.name}"`);
           console.log(
-            `   Reason: Detected potential private key in broadcast file`,
+            chalk.red.bold("\n⚠️  SECURITY: Skipped") +
+              chalk.red(` "${contract.name}"`),
           );
           console.log(
-            `   This is a safety feature to prevent accidental key exposure`,
+            chalk.yellow(
+              "   Reason: Detected potential private key in broadcast file",
+            ),
           );
           console.log(
-            `\n Action: Check your deployment script for hardcoded private keys`,
+            chalk.gray(
+              "   This is a safety feature to prevent accidental key exposure",
+            ),
           );
           console.log(
-            `   Use environment variables instead: process.env.PRIVATE_KEY`,
+            chalk.cyan(
+              "\n Action: Check your deployment script for hardcoded private keys",
+            ),
+          );
+          console.log(
+            chalk.gray(
+              "   Use environment variables instead: process.env.PRIVATE_KEY",
+            ),
           );
         }
       }
@@ -79,30 +91,34 @@ async function parseBroadCastInfo(fileBroadCastPath) {
 
     return contracts;
   } catch (error) {
-    console.log("\n❌ Failed to parse Foundry broadcast file");
-    console.log(`   File: ${fileBroadCastPath}`);
+    console.log(chalk.red("\n❌ Failed to parse Foundry broadcast file"));
+    console.log(chalk.gray(`   File: ${fileBroadCastPath}`));
 
     if (error.message.includes("JSON")) {
-      console.log(`\n Problem: Invalid JSON format`);
-      console.log(`   The broadcast file may be corrupted or incomplete`);
-      console.log(`\n Solutions:`);
+      console.log(chalk.yellow("\n📍 Problem: Invalid JSON format"));
+      console.log("   The broadcast file may be corrupted or incomplete");
+      console.log(chalk.cyan("\n Solutions:"));
       console.log(
-        `   1. Re-run your deployment: forge script script/Deploy.s.sol --broadcast`,
+        chalk.gray(
+          "   1. Re-run your deployment: forge script script/Deploy.s.sol --broadcast",
+        ),
       );
-      console.log(`   2. Check if deployment actually succeeded`);
-      console.log(`   3. Verify the file exists and is not empty`);
+      console.log("   2. Check if deployment actually succeeded");
+      console.log("   3. Verify the file exists and is not empty");
     } else if (error.code === "ENOENT") {
-      console.log(`\n Problem: File not found`);
-      console.log(`   The broadcast file doesn't exist at this location`);
-      console.log(`\n Solutions:`);
+      console.log(chalk.yellow("\n📍 Problem: File not found"));
+      console.log("   The broadcast file doesn't exist at this location");
+      console.log(chalk.cyan("\n Solutions:"));
       console.log(
-        `   1. Deploy first: forge script script/Deploy.s.sol --broadcast`,
+        chalk.gray(
+          "   1. Deploy first: forge script script/Deploy.s.sol --broadcast",
+        ),
       );
-      console.log(`   2. Check the path is correct`);
-      console.log(`   3. Run: clinch sync (without path to auto-detect)`);
+      console.log("   2. Check the path is correct");
+      console.log("   3. Run: clinch sync (without path to auto-detect)");
     } else {
-      console.log(`\n Problem: ${error.message}`);
-      console.log(`\n Try running your Foundry deployment again`);
+      console.log(chalk.yellow(`\n📍 Problem: ${error.message}`));
+      console.log(chalk.cyan("\n💡 Try running your Foundry deployment again"));
     }
   }
 }

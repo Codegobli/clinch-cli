@@ -2,6 +2,7 @@
 
 const { Command } = require("commander");
 const path = require("path");
+const chalk = require("chalk");
 const {
   addContract,
   deleteContract,
@@ -420,24 +421,32 @@ program
       }
 
       if (!targetPath) {
-        console.log("\n❌ Could not auto-detect broadcast file");
-        console.log(`\n Searched in: ${process.cwd()}/broadcast/`);
-        console.log(`\n Possible reasons:`);
+        console.log(chalk.red("\n❌ Could not auto-detect broadcast file"));
         console.log(
-          `   1. Not in Foundry project root (check: ls foundry.toml)`,
+          chalk.yellow(`\n Searched in: ${process.cwd()}/broadcast/`),
+        );
+        console.log(chalk.cyan("\n Possible reasons:"));
+        console.log(
+          chalk.gray(
+            "   1. Not in Foundry project root (check: ls foundry.toml)",
+          ),
         );
         console.log(
-          `   2. No deployments yet (run: forge script script/Deploy.s.sol --broadcast)`,
+          chalk.gray(
+            "   2. No deployments yet (run: forge script script/Deploy.s.sol --broadcast)",
+          ),
         );
-        console.log(`   3. Broadcast folder doesn't exist`);
-        console.log(`\n Manual sync:`);
+        console.log("   3. Broadcast folder doesn't exist");
+        console.log(chalk.cyan("\n Manual sync:"));
         console.log(
-          `   clinch sync -b broadcast/YourScript.s.sol/31337/run-latest.json`,
+          chalk.bold(
+            "   clinch sync -b broadcast/YourScript.s.sol/31337/run-latest.json",
+          ),
         );
         return;
       }
 
-      console.log(`📡 Syncing from: ${targetPath}`);
+      console.log(chalk.bold(`📡 Syncing from: ${targetPath}`));
 
       const resolvedPath = path.resolve(process.cwd(), targetPath);
       const syncedContracts = await syncFromFoundry(resolvedPath);
@@ -472,16 +481,16 @@ program
       // Create empty contracts file if it doesn't exist
       try {
         await fs.access(contractsFile);
-        console.log("\n✅ Clinch is already initialized");
-        console.log(`   Registry: ${clinchDir}`);
-        console.log(`\n To reset:`);
-        console.log(`   1. Backup: cp -r .clinch .clinch.backup`);
-        console.log(`   2. Delete: rm -rf .clinch`);
-        console.log(`   3. Re-init: clinch init`);
+        console.log(chalk.green("\n✅ Clinch is already initialized"));
+        console.log(chalk.gray(`   Registry: ${clinchDir}`));
+        console.log(chalk.cyan("\n💡 To reset:"));
+        console.log("   1. Backup: cp -r .clinch .clinch.backup");
+        console.log("   2. Delete: rm -rf .clinch");
+        console.log("   3. Re-init: clinch init");
       } catch {
         await fs.writeFile(contractsFile, "[]", "utf8");
-        console.log("Clinch initialized successfully!");
-        console.log(`Registry location: ${clinchDir}`);
+        console.log(chalk.green("✅ Clinch initialized successfully!"));
+        console.log(chalk.gray(`Registry location: ${clinchDir}`));
         console.log("\nNext steps:");
         console.log("  1. Deploy contracts with Foundry");
         console.log(

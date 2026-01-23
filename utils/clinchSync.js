@@ -2,6 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const { parseBroadCastInfo } = require("./foundryParser");
 const { addContract } = require("./fileWriter");
+const chalk = require("chalk");
 
 // ============================================
 // FOUNDRY SYNC
@@ -15,18 +16,18 @@ const { addContract } = require("./fileWriter");
  * @returns {Array} Successfully synced contracts
  */
 async function syncFromFoundry(broadcastPath) {
-  console.log(" CLI is currently looking at:", process.cwd());
-  console.log("🔍 Syncing from Foundry broadcast...");
+  console.log(chalk.gray(" CLI is currently looking at:"), process.cwd());
+  console.log(chalk.bold(" Syncing from Foundry broadcast..."));
 
   const newContracts = await parseBroadCastInfo(broadcastPath);
 
   if (newContracts.length === 0) {
-    console.log("\n No contracts found in this broadcast file");
-    console.log(`\n This could mean:`);
-    console.log(`   1. No CREATE transactions in this deployment`);
-    console.log(`   2. Only contract calls (not deployments)`);
-    console.log(`   3. Deployment may have failed`);
-    console.log(`\n Check your deployment output for errors`);
+    console.log(chalk.yellow("\n No contracts found in this broadcast file"));
+    console.log(chalk.cyan("\n This could mean:"));
+    console.log("   1. No CREATE transactions in this deployment");
+    console.log("   2. Only contract calls (not deployments)");
+    console.log("   3. Deployment may have failed");
+    console.log(chalk.gray("\n Check your deployment output for errors"));
     return [];
   }
 
@@ -36,15 +37,22 @@ async function syncFromFoundry(broadcastPath) {
   for (const contract of newContracts) {
     try {
       await addContract(contract);
-      console.log(` Synced: ${contract.name} (${contract.network})`);
+      console.log(
+        chalk.green(` ✓ Synced: ${contract.name} (${contract.network})`),
+      );
       syncCount++;
       syncedContracts.push(contract);
     } catch (err) {
-      console.error(` Failed to sync ${contract.name}:`, err.message);
+      console.log(
+        chalk.red(` ✗ Failed to sync ${contract.name}:`),
+        err.message,
+      );
     }
   }
 
-  console.log(`\n Sync complete! Added ${syncCount} contract(s).`);
+  console.log(
+    chalk.green(`\n✅ Sync complete! Added ${syncCount} contract(s).`),
+  );
   return syncedContracts;
 }
 
@@ -63,10 +71,14 @@ async function findLatestBroadcast() {
 
   // Check if broadcast folder exists
   if (!fs.existsSync(broadcastDir)) {
-    console.log(`\n⚠️  No 'broadcast' folder found in current directory`);
-    console.log(` Currently looking in: ${process.cwd()}`);
     console.log(
-      `\n💡 Make sure you're in your Foundry project root, then try again.`,
+      chalk.yellow("\n⚠️  No 'broadcast' folder found in current directory"),
+    );
+    console.log(chalk.gray(` Currently looking in: ${process.cwd()}`));
+    console.log(
+      chalk.cyan(
+        "\n Make sure you're in your Foundry project root, then try again.",
+      ),
     );
     return null;
   }
@@ -74,9 +86,10 @@ async function findLatestBroadcast() {
   // Get all script folders (e.g., Deploy.s.sol)
   const scripts = fs.readdirSync(broadcastDir);
   if (scripts.length === 0) {
-    console.log(`\n⚠️  'broadcast' folder is empty`);
+    console.log(chalk.yellow("\n⚠️  'broadcast' folder is empty"));
     console.log(
-      `💡 Deploy a contract first: forge script script/Deploy.s.sol --broadcast`,
+      chalk.cyan(" Deploy a contract first:"),
+      chalk.gray("forge script script/Deploy.s.sol --broadcast"),
     );
     return null;
   }
@@ -98,7 +111,9 @@ async function findLatestBroadcast() {
 
   if (!fs.existsSync(finalPath)) {
     console.log(
-      `\n⚠️  No run-latest.json found in ${scriptPath}/${firstChain}`,
+      chalk.yellow(
+        `\n⚠️  No run-latest.json found in ${scriptPath}/${firstChain}`,
+      ),
     );
     return null;
   }
@@ -125,13 +140,17 @@ async function findLatestAbi(contractName) {
     return fileData.abi;
   }
 
-  console.log(`\n⚠️  ABI not found for ${contractName}`);
-  console.log(`   Expected location: ${expectedAbiPath}`);
-  console.log(`\n This is not critical - contract will sync without ABI`);
+  console.log(chalk.yellow(`\n⚠️  ABI not found for ${contractName}`));
+  console.log(chalk.gray(`   Expected location: ${expectedAbiPath}`));
   console.log(
-    `   To add ABI later: clinch update ${contractName} --abi <path>`,
+    chalk.cyan("\n This is not critical - contract will sync without ABI"),
   );
-  console.log(`   Or compile: forge build`);
+  console.log(
+    chalk.gray(
+      `   To add ABI later: clinch update ${contractName} --abi <path>`,
+    ),
+  );
+  console.log(chalk.gray("   Or compile: forge build"));
   return null;
 }
 
