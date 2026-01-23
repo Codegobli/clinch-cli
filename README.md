@@ -37,14 +37,14 @@ Clinch is a CLI tool that helps you and your team manage deployed smart contract
 
 ## ✨ Features
 
-- 🚀 **Auto-sync from Foundry** - Detects and imports deployments automatically
-- 📦 **Project-specific registry** - Each Foundry project gets its own `.clinch/` folder
-- 🌐 **Multi-network support** - Track contracts across mainnet, testnets, and local networks
-- 🔄 **Git automation** - Optional auto-commit and push to share with your team
-- 🔍 **Smart search** - Find contracts by name, address, or network
-- 📊 **Multiple views** - Table format for devs, card format for non-technical users
-- 🔐 **Security checks** - Prevents accidental private key exposure
-- 💾 **ABI management** - Automatically captures and stores contract ABIs
+-  **Auto-sync from Foundry** - Detects and imports deployments automatically
+-  **Project-specific registry** - Each Foundry project gets its own `.clinch/` folder
+-  **Multi-network support** - Track contracts across mainnet, testnets, and local networks
+-  **Git automation** - Optional auto-commit and push to share with your team
+-  **Smart search** - Find contracts by name, address, or network
+-  **Multiple views** - Table format for devs, card format for non-technical users
+-  **Security checks** - Prevents accidental private key exposure
+-  **ABI management** - Automatically captures and stores contract ABIs
 
 ---
 
