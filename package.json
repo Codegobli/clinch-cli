@@ -2,7 +2,7 @@
   "name": "clinch-cli",
   "version": "1.0.0",
   "bin": {
-    "clinch": "./index.js"
+    "clinch": "index.js"
   },
   "main": "index.js",
   "scripts": {
@@ -25,7 +25,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/samsonafolabi/clinch-cli.git"
+    "url": "git+https://github.com/samsonafolabi/clinch-cli.git"
   },
   "bugs": {
     "url": "https://github.com/samsonafolabi/clinch-cli/issues"

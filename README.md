@@ -39,14 +39,14 @@ Clinch is a CLI tool that helps you and your team manage deployed smart contract
 
 ## ✨ Features
 
--  **Auto-sync from Foundry** - Detects and imports deployments automatically
--  **Project-specific registry** - Each Foundry project gets its own `.clinch/` folder
--  **Multi-network support** - Track contracts across mainnet, testnets, and local networks
--  **Git automation** - Optional auto-commit and push to share with your team
--  **Smart search** - Find contracts by name, address, or network
--  **Multiple views** - Table format for devs, card format for non-technical users
--  **Security checks** - Prevents accidental private key exposure
--  **ABI management** - Automatically captures and stores contract ABIs
+- **Auto-sync from Foundry** - Detects and imports deployments automatically
+- **Project-specific registry** - Each Foundry project gets its own `.clinch/` folder
+- **Multi-network support** - Track contracts across mainnet, testnets, and local networks
+- **Git automation** - Optional auto-commit and push to share with your team
+- **Smart search** - Find contracts by name, address, or network
+- **Multiple views** - Table format for devs, card format for non-technical users
+- **Security checks** - Prevents accidental private key exposure
+- **ABI management** - Automatically captures and stores contract ABIs
 
 ---
 
@@ -845,8 +845,8 @@ MIT License - see [LICENSE](LICENSE) file for details
 
 ## 🔗 Links
 
-- **GitHub:** [https://github.com/yourusername/clinch-cli](https://github.com/yourusername/clinch-cli)
-- **Issues:** [https://github.com/yourusername/clinch-cli/issues](https://github.com/yourusername/clinch-cli/issues)
+- **GitHub:** [https://github.com/samsonafolabi/clinch-cli](https://github.com/samsonafolabi/clinch-cli)
+- **Issues:** [https://github.com/samsonafolabi/clinch-cli/issues](https://github.com/samsonafolabi/clinch-cli/issues)
 - **NPM:** [https://www.npmjs.com/package/clinch-cli](https://www.npmjs.com/package/clinch-cli)
 
 ---
@@ -862,9 +862,7 @@ Built with:
 
 ## 📞 Support
 
-- 📧 Email: support@clinch.dev
-- 💬 Discord: [Join our server](https://discord.gg/clinch)
-- 🐦 Twitter: [@ClinchCLI](https://twitter.com/ClinchCLI)
+- 📧 Email: afoalbisamson20@gmail.com
 
 ---
 
