@@ -9,10 +9,32 @@
     "test": "node utils/testUtilities.js",
     "start": "node index.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "keywords": [
+    "foundry",
+    "smart-contracts",
+    "ethereum",
+    "cli",
+    "web3",
+    "deployment",
+    "solidity",
+    "contract-management",
+    "blockchain",
+    "developer-tools"
+  ],
+  "author": "Afolabi Samson <afolabisamson20@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/samsonafolabi/clinch-cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/samsonafolabi/clinch-cli/issues"
+  },
+  "homepage": "https://github.com/samsonafolabi/clinch-cli#readme",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "description": "Smart contract registry for Foundry projects. Auto-sync deployments, track contracts across networks, and share with your team via Git.",
   "dependencies": {
     "chalk": "^4.1.2",
     "commander": "^14.0.2"

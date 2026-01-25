@@ -1,0 +1,51 @@
+# Development files
+.git
+.github
+.gitignore
+.vscode
+.idea
+
+# Dependencies
+node_modules
+
+# Test files
+test/
+tests/
+*.test.js
+coverage/
+
+# Example/demo folders
+examples/
+test-foundry/
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+logs/
+
+# Environment
+.env
+.env.local
+
+# Temporary files
+*.tmp
+.clinch/
+
+# Exclude heavy assets from the npm package
+screenshots/
+*.png
+*.gif
+
+
+# Keep these (explicitly include)
+!README.md
+!LICENSE
+!index.js
+!utils/
+!screenshots/
