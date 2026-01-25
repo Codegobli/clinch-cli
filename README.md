@@ -35,6 +35,8 @@ Clinch is a CLI tool that helps you and your team manage deployed smart contract
 
 ---
 
+![Complete Workflow](screenshots/complete-workflow.gif)
+
 ## ✨ Features
 
 -  **Auto-sync from Foundry** - Detects and imports deployments automatically
@@ -89,6 +91,7 @@ clinch init
 ```
 
 This creates a `.clinch/` folder with:
+
 - `contracts.json` - Your contract registry
 - `abis/` - Stored contract ABIs
 
@@ -113,10 +116,17 @@ clinch sync --git
 ```bash
 # Developer view (table)
 clinch list
+**Output:**
+
+![Table View](screenshots/table-view.png)
 
 # User-friendly view (cards)
 clinch view
 ```
+
+**Output:**
+
+![Card View](screenshots/card-view.png)
 
 **That's it!** Your contracts are now tracked and ready to share with your team.
 
@@ -133,6 +143,7 @@ clinch init
 ```
 
 **Output:**
+
 ```
 Clinch initialized successfully!
 Registry location: /path/to/project/.clinch
@@ -144,6 +155,7 @@ Next steps:
 ```
 
 **What it does:**
+
 - Creates `.clinch/` folder in current directory
 - Creates `contracts.json` (empty registry)
 - Creates `abis/` folder for ABI storage
@@ -166,6 +178,7 @@ clinch sync --git
 ```
 
 **What it does:**
+
 1. Finds latest `run-latest.json` in `broadcast/` folder
 2. Extracts deployed contracts (CREATE transactions)
 3. Fetches ABIs from `out/` directory
@@ -173,6 +186,7 @@ clinch sync --git
 5. Optionally commits and pushes to Git (with `--git` flag)
 
 **Example output:**
+
 ```
 📍 CLI is currently looking at: /home/user/my-project
 🔍 Syncing from Foundry broadcast...
@@ -196,6 +210,7 @@ clinch add <name> <address> <network> [options]
 ```
 
 **Options:**
+
 - `-a, --abi <path>` - Path to ABI file
 - `-v, --verified` - Mark contract as verified
 
@@ -213,6 +228,7 @@ clinch add WETH 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2 mainnet --verified
 ```
 
 **Features:**
+
 - **Duplicate detection** - Won't allow duplicate names
 - **Alias support** - Same address can have multiple names
 - **Address validation** - Checks for valid Ethereum address format
@@ -228,6 +244,7 @@ clinch list [options]
 ```
 
 **Options:**
+
 - `-n, --network <network>` - Filter by network
 - `-v, --verified` - Show only verified contracts
 
@@ -245,6 +262,7 @@ clinch list --verified
 ```
 
 **Output:**
+
 ```
 Found 3 contract(s):
 
@@ -270,6 +288,7 @@ clinch view [name] [options]
 ```
 
 **Options:**
+
 - `-n, --network <network>` - Filter by network
 
 **Examples:**
@@ -286,6 +305,7 @@ clinch view --network sepolia
 ```
 
 **Output:**
+
 ```
 ╔════════════════════════════════════════════════════════╗
 ║  SimpleToken                                           ║
@@ -305,6 +325,7 @@ Total: 1 contract(s)
 ```
 
 **Why use this?**
+
 - Share with non-technical team members
 - Click explorer links directly (works in most terminals)
 - Human-readable dates and network names
@@ -327,6 +348,7 @@ clinch show SimpleToken
 ```
 
 **Output:**
+
 ```
 Contract Details:
 
@@ -350,6 +372,7 @@ clinch find [query] [options]
 ```
 
 **Options:**
+
 - `-n, --network <network>` - Filter by network
 - `-v, --verified` - Show only verified contracts
 
@@ -380,6 +403,7 @@ clinch update <name> [options]
 ```
 
 **Options:**
+
 - `-n, --name <newName>` - Change contract name
 - `-a, --address <address>` - Update address
 - `--network <network>` - Update network
@@ -414,6 +438,7 @@ clinch delete <name> [options]
 ```
 
 **Options:**
+
 - `-f, --force` - Skip confirmation prompt
 
 **Examples:**
@@ -427,11 +452,13 @@ clinch delete OldContract --force
 ```
 
 **What it does:**
+
 - Removes contract from `contracts.json`
 - Deletes associated ABI file from `abis/` folder
 - Asks for confirmation (unless `--force` used)
 
 **Output:**
+
 ```
 Are you sure you want to delete "OldContract"? (y/N) y
 ABI file "abis/OldContract-0x5fbd.json" cleaned up.
@@ -449,6 +476,7 @@ clinch networks
 ```
 
 **Output:**
+
 ```
 Networks:
 
@@ -503,6 +531,7 @@ chore(clinch): sync ContractName1, ContractName2
 Clinch detects common Git issues:
 
 **Not a Git repository:**
+
 ```
 ❌ Git sync failed
 📍 Problem: This folder is not a Git repository
@@ -510,6 +539,7 @@ Clinch detects common Git issues:
 ```
 
 **Remote has changes:**
+
 ```
 ❌ Git sync failed
 📍 Problem: GitHub has changes you don't have locally
@@ -517,6 +547,7 @@ Clinch detects common Git issues:
 ```
 
 **No internet:**
+
 ```
 ❌ Git sync failed
 📍 Problem: No internet connection
@@ -533,6 +564,7 @@ Clinch is designed for team workflows.
 ### Setup (One Time)
 
 **Project Lead:**
+
 ```bash
 cd your-foundry-project
 clinch init
@@ -542,6 +574,7 @@ git push
 ```
 
 **Team Members:**
+
 ```bash
 git clone https://github.com/yourteam/project.git
 cd project
@@ -552,12 +585,14 @@ clinch list  # See all deployed contracts immediately!
 ### Daily Workflow
 
 **Developer A deploys new contract:**
+
 ```bash
 forge script script/DeployNFT.s.sol --rpc-url sepolia --broadcast
 clinch sync --git
 ```
 
 **Developer B pulls changes:**
+
 ```bash
 git pull
 clinch list  # Sees the new NFT contract automatically!
@@ -599,10 +634,12 @@ your-foundry-project/
 ### What to Commit to Git
 
 **Always commit:**
+
 - ✅ `.clinch/contracts.json` - Contract registry
 - ✅ `.clinch/abis/` - ABI files (optional but recommended)
 
 **Don't commit:**
+
 - ❌ `broadcast/` - Contains deployment details (add to `.gitignore`)
 - ❌ `out/` - Compiled contracts (add to `.gitignore`)
 
@@ -689,6 +726,7 @@ clinch view > deployed-contracts.txt
 **Problem:** Clinch can't find `broadcast/` folder
 
 **Solutions:**
+
 1. Check you're in your Foundry project root: `ls foundry.toml`
 2. Deploy first: `forge script script/Deploy.s.sol --broadcast`
 3. Specify path manually: `clinch sync -b broadcast/Deploy.s.sol/31337/run-latest.json`
@@ -700,6 +738,7 @@ clinch view > deployed-contracts.txt
 **Problem:** Contract name doesn't match
 
 **Solutions:**
+
 1. List all contracts: `clinch list`
 2. Search for it: `clinch find <partial-name>`
 3. Contract names are case-insensitive but must match exactly
@@ -711,6 +750,7 @@ clinch view > deployed-contracts.txt
 **Problem:** `.clinch/contracts.json` has invalid JSON
 
 **Solutions:**
+
 1. Restore from backup: `cp .clinch/contracts.json.backup .clinch/contracts.json`
 2. Reset registry: `rm .clinch/contracts.json && clinch init`
 3. Manually fix JSON syntax in the file
@@ -724,6 +764,7 @@ clinch view > deployed-contracts.txt
 **Common causes and fixes:**
 
 **Not a Git repo:**
+
 ```bash
 git init
 git add .
@@ -731,12 +772,14 @@ git commit -m "initial commit"
 ```
 
 **Remote has changes:**
+
 ```bash
 git pull
 clinch sync --git
 ```
 
 **No internet:**
+
 ```bash
 # Your changes are saved locally
 # Push manually later when online:
@@ -744,6 +787,7 @@ git push origin main
 ```
 
 **Authentication failed:**
+
 ```bash
 # Check your GitHub credentials
 gh auth login  # If using GitHub CLI
@@ -756,6 +800,7 @@ gh auth login  # If using GitHub CLI
 **Problem:** Can't find ABI in `out/` directory
 
 **Solutions:**
+
 1. Compile contracts: `forge build`
 2. Check contract name matches file name
 3. Verify path: `ls out/YourContract.sol/YourContract.json`
@@ -809,6 +854,7 @@ MIT License - see [LICENSE](LICENSE) file for details
 ## 🙏 Acknowledgments
 
 Built with:
+
 - [Commander.js](https://github.com/tj/commander.js/) - CLI framework
 - [Foundry](https://github.com/foundry-rs/foundry) - Ethereum development toolkit
 
